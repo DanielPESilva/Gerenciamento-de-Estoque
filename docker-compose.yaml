@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  db:
+    image: mysql:latest
+    restart: always
+    environment:
+      MYSQL_DATABASE: dressfy_db
+      MYSQL_USER: dressfy_user
+      MYSQL_PASSWORD: dressfy_pw
+      MYSQL_ROOT_PASSWORD: dressfy
+    ports:
+      - "5002:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: dressfy
+    ports:
+      - "5003:80"
+
+volumes:
+  db_data:
