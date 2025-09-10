@@ -1,0 +1,146 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Baixa {
+  id         Int      @id @default(autoincrement())
+  roupa_id   Int
+  quantidade Int
+  data_baixa DateTime @default(now())
+  motivo     String
+  Roupa      Roupas   @relation(fields: [roupa_id], references: [id])
+
+  @@index([roupa_id], map: "Baixa_roupa_id_fkey")
+}
+
+model Cliente {
+  id           Int            @id @default(autoincrement())
+  nome         String
+  email        String         @unique
+  cpf          String
+  criado_em    DateTime       @default(now())
+  telefone     String?
+  endereco     String?
+  Condicionais Condicionais[]
+}
+
+model Compras {
+  id                 Int            @id @default(autoincrement())
+  data_compra        DateTime       @default(now())
+  forma_pgto         String
+  valor_pago         Float
+  fornecendor        String?
+  telefone_forncedor String?
+  ComprasItens       ComprasItens[]
+}
+
+model ComprasItens {
+  id          Int     @id @default(autoincrement())
+  roupas_id   Int
+  compras_id  Int
+  quatidade   Int
+  valor_peça Int
+  Compras     Compras @relation(fields: [compras_id], references: [id])
+  Roupa       Roupas  @relation(fields: [roupas_id], references: [id])
+
+  @@index([compras_id], map: "ComprasItens_compras_id_fkey")
+  @@index([roupas_id], map: "ComprasItens_roupas_id_fkey")
+}
+
+model Condicionais {
+  id                Int                 @id @default(autoincrement())
+  cliente_id        Int
+  data              DateTime            @default(now())
+  data_devolucao    DateTime
+  devolvido         Boolean             @default(false)
+  Cliente           Cliente             @relation(fields: [cliente_id], references: [id])
+  CondicionaisItens CondicionaisItens[]
+
+  @@index([cliente_id], map: "Condicionais_cliente_id_fkey")
+}
+
+model CondicionaisItens {
+  id              Int          @id @default(autoincrement())
+  roupas_id       Int
+  condicionais_id Int
+  quatidade       Int
+  Condicionais    Condicionais @relation(fields: [condicionais_id], references: [id])
+  Roupa           Roupas       @relation(fields: [roupas_id], references: [id])
+
+  @@index([condicionais_id], map: "CondicionaisItens_condicionais_id_fkey")
+  @@index([roupas_id], map: "CondicionaisItens_roupas_id_fkey")
+}
+
+model HistoricoStatus {
+  id              Int      @id @default(autoincrement())
+  roupas_id       Int?
+  status_anterior Status?
+  status_novo     Status?
+  alterado_em     DateTime @default(now())
+  Roupa           Roupas?  @relation(fields: [roupas_id], references: [id])
+
+  @@index([roupas_id], map: "HistoricoStatus_roupas_id_fkey")
+}
+
+model Roupas {
+  id                Int                 @id @default(autoincrement())
+  nome              String
+  descricao         String?
+  tipo              String
+  tamanho           String
+  cor               String
+  preco             Float
+  quantidade        Int                 @default(0)
+  usuarios_id       Int
+  criado_em         DateTime            @default(now())
+  Baixa             Baixa[]
+  ComprasItens      ComprasItens[]
+  CondicionaisItens CondicionaisItens[]
+  HistoricoStatus   HistoricoStatus[]
+  Usuario           Usuarios            @relation(fields: [usuarios_id], references: [id])
+  VendasItens       VendasItens[]
+
+  @@index([usuarios_id], map: "Roupas_usuarios_id_fkey")
+}
+
+model Usuarios {
+  id        Int      @id @default(autoincrement())
+  nome      String
+  email     String   @unique
+  senha     String
+  criado_em DateTime @default(now())
+  Roupas    Roupas[]
+}
+
+model Vendas {
+  id          Int           @id @default(autoincrement())
+  data_venda  DateTime      @default(now())
+  forma_pgto  String
+  valor_total Float
+  desconto    Float         @default(0)
+  valor_pago  Float
+  VendasItens VendasItens[]
+}
+
+model VendasItens {
+  id        Int    @id @default(autoincrement())
+  roupas_id Int
+  vendas_id Int
+  quatidade Int
+  Roupa     Roupas @relation(fields: [roupas_id], references: [id])
+  Venda     Vendas @relation(fields: [vendas_id], references: [id])
+
+  @@index([roupas_id], map: "VendasItens_roupas_id_fkey")
+  @@index([vendas_id], map: "VendasItens_vendas_id_fkey")
+}
+
+enum Status {
+  disponivel
+  em_condicional
+  vendido
+}
