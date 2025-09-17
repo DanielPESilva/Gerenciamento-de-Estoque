@@ -16,7 +16,16 @@ router.post('/', wrapException(ItensController.create));
 // PUT /api/itens/:id
 router.put('/:id', wrapException(ItensController.update));
 
+// PATCH /api/itens/:id
+router.patch('/:id', wrapException(ItensController.patch));
+
 // DELETE /api/itens/:id
 router.delete('/:id', wrapException(ItensController.delete));
+
+// POST /api/itens/:id/add-quantidade - Adicionar quantidade ao estoque
+router.post('/:id/add-quantidade', wrapException(ItensController.addQuantidade));
+
+// POST /api/itens/:id/remove-quantidade - Remover quantidade do estoque
+router.post('/:id/remove-quantidade', wrapException(ItensController.removeQuantidade));
 
 export default router;
