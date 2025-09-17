@@ -63,3 +63,34 @@ export const getById = async (req, res) => {
         data: usuario
     });
 };
+
+export const create = async (req, res) => {
+    // Validação dos dados de entrada
+    const bodyValidation = UsuariosSchema.create.safeParse(req.body);
+    
+    if (!bodyValidation.success) {
+        throw new APIError(
+            bodyValidation.error?.issues?.map(err => ({
+                path: err.path.join('.'),
+                message: err.message
+            })) || [{ path: "validation", message: "Erro de validação" }],
+            400
+        );
+    }
+
+    // Verificar se email já existe
+    const existingUser = await UsuariosService.getUsuarioByEmail(bodyValidation.data.email);
+    if (existingUser) {
+        throw new APIError(
+            [{ path: "email", message: "Email já está em uso por outro usuário" }],
+            400
+        );
+    }
+
+    const usuario = await UsuariosService.createUsuario(bodyValidation.data);
+
+    return res.status(201).json({
+        success: true,
+        data: usuario
+    });
+};
