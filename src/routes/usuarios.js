@@ -1,5 +1,5 @@
 import express from 'express';
-import { getAll, getById, create, patch } from '../controllers/usuariosController.js';
+import { getAll, getById, create, patch, deleteUser } from '../controllers/usuariosController.js';
 import { wrapException } from '../utils/wrapException.js';
 
 const router = express.Router();
@@ -15,5 +15,8 @@ router.post('/', wrapException(create));
 
 // PATCH /api/usuarios/:id
 router.patch('/:id', wrapException(patch));
+
+// DELETE /api/usuarios/:id
+router.delete('/:id', wrapException(deleteUser));
 
 export default router;

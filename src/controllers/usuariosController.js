@@ -168,3 +168,34 @@ export const patch = async (req, res) => {
         message: "Usuário atualizado com sucesso"
     });
 };
+
+export const deleteUser = async (req, res) => {
+    // Validação do ID
+    const paramValidation = UsuariosSchema.id.safeParse(req.params);
+    
+    if (!paramValidation.success) {
+        throw new APIError(
+            paramValidation.error?.issues?.map(err => ({
+                path: err.path.join('.'),
+                message: err.message
+            })) || [{ path: "validation", message: "Erro de validação" }],
+            400
+        );
+    }
+
+    const { id } = paramValidation.data;
+
+    // Verificar se o usuário existe
+    const existingUser = await UsuariosService.getUsuarioById(id);
+    if (!existingUser) {
+        throw new APIError(
+            [{ path: "ID", message: "Usuário não encontrado com o ID informado" }],
+            404
+        );
+    }
+
+    // Deletar o usuário
+    await UsuariosService.deleteUsuario(id);
+
+    return res.status(204).send();
+};
