@@ -199,3 +199,48 @@ export const deleteUser = async (req, res) => {
 
     return res.status(204).send();
 };
+
+export const getMe = async (req, res) => {
+    // Para implementar /me, precisamos de alguma forma de identificar o usuário atual
+    // Por enquanto, vou simular usando um header X-User-ID
+    // Em uma implementação real, isso seria feito com JWT ou sessões
+    
+    const userId = req.headers['x-user-id'];
+    
+    if (!userId) {
+        throw new APIError(
+            [{ path: "authentication", message: "Header X-User-ID é obrigatório para esta rota" }],
+            401
+        );
+    }
+
+    // Validação do ID do usuário
+    const userIdValidation = UsuariosSchema.id.safeParse({ id: userId });
+    
+    if (!userIdValidation.success) {
+        throw new APIError(
+            userIdValidation.error?.issues?.map(err => ({
+                path: err.path.join('.'),
+                message: err.message
+            })) || [{ path: "validation", message: "Erro de validação" }],
+            400
+        );
+    }
+
+    const { id } = userIdValidation.data;
+
+    const usuario = await UsuariosService.getUsuarioById(id);
+
+    if (!usuario) {
+        throw new APIError(
+            [{ path: "authentication", message: "Usuário não encontrado" }],
+            404
+        );
+    }
+
+    return res.status(200).json({
+        success: true,
+        data: usuario,
+        message: "Dados do usuário atual"
+    });
+};
