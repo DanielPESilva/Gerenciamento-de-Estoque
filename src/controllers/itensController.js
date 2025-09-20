@@ -348,6 +348,39 @@ class ItensController {
             }
         });
     }
+
+    // Buscar itens por nome (para autocomplete)
+    static async searchByName(req, res) {
+        const searchSchema = z.object({
+            q: z.string().min(1, "Query de busca deve ter pelo menos 1 caractere"),
+            limit: z.preprocess(
+                (val) => val ? parseInt(val) : 10,
+                z.number().int().min(1).max(20).optional().default(10)
+            )
+        });
+
+        const queryValidation = searchSchema.safeParse(req.query);
+        
+        if (!queryValidation.success) {
+            throw new APIError(
+                queryValidation.error?.issues?.map(err => ({
+                    path: err.path.join('.'),
+                    message: err.message
+                })) || [{ path: "validation", message: "Erro de validação" }],
+                400
+            );
+        }
+
+        const { q: searchTerm, limit } = queryValidation.data;
+
+        const result = await ItensService.searchByName(searchTerm, limit);
+        
+        return res.status(200).json({
+            success: true,
+            data: result,
+            message: `${result.length} item(ns) encontrado(s)`
+        });
+    }
 }
 
 export default ItensController;

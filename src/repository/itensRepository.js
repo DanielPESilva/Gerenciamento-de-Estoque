@@ -162,6 +162,31 @@ class ItensRepository {
             data: { quantidade: Number(quantidade) }
         });
     }
+
+    // Buscar itens por nome (para autocomplete)
+    static async searchByName(searchTerm, limit = 10) {
+        return await prisma.roupas.findMany({
+            where: {
+                nome: {
+                    contains: searchTerm,
+                    mode: 'insensitive'
+                }
+            },
+            select: {
+                id: true,
+                nome: true,
+                tipo: true,
+                cor: true,
+                tamanho: true,
+                preco: true,
+                quantidade: true
+            },
+            take: limit,
+            orderBy: {
+                nome: 'asc'
+            }
+        });
+    }
 }
 
 export default ItensRepository;
