@@ -118,13 +118,14 @@ model Usuarios {
 }
 
 model Vendas {
-  id          Int           @id @default(autoincrement())
-  data_venda  DateTime      @default(now())
-  forma_pgto  String
-  valor_total Float
-  desconto    Float         @default(0)
-  valor_pago  Float
-  VendasItens VendasItens[]
+  id               Int           @id @default(autoincrement())
+  data_venda       DateTime      @default(now())
+  forma_pgto       String
+  valor_total      Float
+  desconto         Float         @default(0)
+  valor_pago       Float
+  descricao_permuta String?       // Campo para descrever a permuta quando forma_pgto = "Permuta"
+  VendasItens      VendasItens[]
 }
 
 model VendasItens {
