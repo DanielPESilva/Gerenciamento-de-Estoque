@@ -48,11 +48,18 @@ INSERT INTO compras_itens (roupas_id, compras_id, quatidade, valor_peça) VALUES
     (6, 3, 2, 180);
 
 -- Inserindo dados na tabela `vendas`
-INSERT INTO vendas (data_venda, forma_pgto, valor_total, desconto, valor_pago) VALUES 
-    ('2025-07-02', 'Pix', 200.00, 0, 200.00),
-    ('2025-07-03', 'Dinheiro', 150.00, 10, 140.00),
-    ('2025-07-05', 'Cartão', 350.00, 20, 330.00),
-    ('2025-07-08', 'Pix', 90.00, 0, 90.00);
+INSERT INTO vendas (data_venda, forma_pgto, valor_total, desconto, valor_pago, descricao_permuta) VALUES 
+    ('2025-07-02', 'Pix', 200.00, 0, 200.00, NULL),
+    ('2025-07-03', 'Dinheiro', 150.00, 10, 140.00, NULL),
+    ('2025-07-05', 'Cartão de Crédito', 350.00, 20, 330.00, NULL),
+    ('2025-07-08', 'Pix', 90.00, 0, 90.00, NULL),
+    ('2025-07-10', 'Cartão de Débito', 180.00, 5, 175.00, NULL),
+    ('2025-07-12', 'Boleto', 250.00, 0, 250.00, NULL),
+    ('2025-07-15', 'Cheque', 300.00, 15, 285.00, NULL),
+    ('2025-07-18', 'Permuta', 0.00, 0, 0.00, 'Troca de 1x Calça Jeans por 1x Camiseta Básica + 1x Short Jeans'),
+    ('2025-07-20', 'Permuta', 0.00, 0, 0.00, 'Troca de 2x Camisetas Básicas por 1x Blazer Feminino'),
+    ('2025-07-22', 'Permuta', 0.00, 0, 0.00, 'Troca de 1x Jaqueta Jeans por serviços de costura em 3 peças'),
+    ('2025-07-25', 'Permuta', 0.00, 0, 0.00, 'Troca de 1x Vestido Floral + 1x Saia Midi por 1x Conjunto Completo (cliente)');
 
 -- Inserindo dados na tabela `vendas_itens`
 INSERT INTO vendas_itens (roupas_id, vendas_id, quatidade) VALUES 
@@ -62,7 +69,18 @@ INSERT INTO vendas_itens (roupas_id, vendas_id, quatidade) VALUES
     (4, 2, 1),
     (5, 3, 2),
     (6, 3, 1),
-    (7, 4, 1);
+    (7, 4, 1),
+    (8, 5, 1),
+    (9, 5, 1),
+    (10, 6, 2),
+    (1, 7, 1),
+    (2, 7, 2),
+    -- Permutas não têm itens específicos registrados como vendas tradicionais
+    -- As trocas são descritas no campo descricao_permuta
+    (3, 8, 1),  -- Referência simbólica para a permuta 1
+    (8, 9, 2),  -- Referência simbólica para a permuta 2
+    (9, 10, 1), -- Referência simbólica para a permuta 3
+    (1, 11, 1); -- Referência simbólica para a permuta 4
 
 -- Inserindo dados na tabela `condicionais`
 INSERT INTO condicionais (cliente_id, data, data_devolucao, devolvido) VALUES 

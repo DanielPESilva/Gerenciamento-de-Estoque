@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS `vendas` (
   `valor_total` double NOT NULL,
   `desconto` double NOT NULL DEFAULT '0',
   `valor_pago` double NOT NULL,
+  `descricao_permuta` text CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT 'Descrição da troca quando forma_pgto = Permuta',
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 

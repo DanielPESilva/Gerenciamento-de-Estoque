@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import clienteRouter from "./routes/cliente.js";
 import itensRouter from "./routes/itens.js";
 import usuariosRouter from "./routes/usuarios.js";
+import vendasRouter from "./routes/vendas.js";
 
 dotenv.config();
 
@@ -16,6 +17,7 @@ app.use(express.json());
 app.use("/api/clientes", clienteRouter);
 app.use("/api/itens", itensRouter);
 app.use("/api/usuarios", usuariosRouter);
+app.use("/api/vendas", vendasRouter);
 
 // Rota de health check
 app.get("/health", (req, res) => {
