@@ -125,6 +125,8 @@ model Vendas {
   desconto         Float         @default(0)
   valor_pago       Float
   descricao_permuta String?       // Campo para descrever a permuta quando forma_pgto = "Permuta"
+  nome_cliente     String?       // Nome do cliente (opcional)
+  telefone_cliente String?       // Telefone do cliente (opcional)
   VendasItens      VendasItens[]
 }
 

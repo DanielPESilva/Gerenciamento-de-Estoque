@@ -234,11 +234,7 @@ class ItensController {
         }
 
         // Validação da quantidade a adicionar
-        const quantidadeSchema = z.object({
-            quantidade: z.number().int().positive("Quantidade deve ser um número positivo")
-        });
-
-        const bodyValidation = quantidadeSchema.safeParse(req.body);
+        const bodyValidation = ItensSchema.quantidade.safeParse(req.body);
         
         if (!bodyValidation.success) {
             throw new APIError(
@@ -295,11 +291,7 @@ class ItensController {
         }
 
         // Validação da quantidade a remover
-        const quantidadeSchema = z.object({
-            quantidade: z.number().int().positive("Quantidade deve ser um número positivo")
-        });
-
-        const bodyValidation = quantidadeSchema.safeParse(req.body);
+        const bodyValidation = ItensSchema.quantidade.safeParse(req.body);
         
         if (!bodyValidation.success) {
             throw new APIError(
@@ -346,6 +338,32 @@ class ItensController {
                 quantidade_removida: quantidade,
                 quantidade_atual: novaQuantidade
             }
+        });
+    }
+
+    // Buscar itens por nome (para autocomplete)
+    static async searchByName(req, res) {
+        const queryValidation = ItensSchema.search.safeParse(req.query);
+        
+        if (!queryValidation.success) {
+            throw new APIError(
+                queryValidation.error?.issues?.map(err => ({
+                    path: err.path.join('.'),
+                    message: err.message
+                })) || [{ path: "validation", message: "Erro de validação" }],
+                400
+            );
+        }
+
+        const { q: searchTerm, nome, limit } = queryValidation.data;
+        const termoBusca = searchTerm || nome;
+
+        const result = await ItensService.searchByName(termoBusca, limit);
+        
+        return res.status(200).json({
+            success: true,
+            data: result,
+            message: `${result.length} itens encontrados`
         });
     }
 }

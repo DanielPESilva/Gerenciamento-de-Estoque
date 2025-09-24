@@ -75,6 +75,76 @@ class VendasService {
         
         return await this.getAllVendas(filters, pagination);
     }
+
+    // Criar nova venda
+    static async createVenda(vendaData) {
+        try {
+            const novaVenda = await VendasRepository.createVenda(vendaData);
+            
+            // Processar dados para resposta
+            return {
+                id: novaVenda.id,
+                data_venda: novaVenda.data_venda,
+                forma_pgto: novaVenda.forma_pgto,
+                valor_total: novaVenda.valor_total,
+                desconto: novaVenda.desconto,
+                valor_pago: novaVenda.valor_pago,
+                descricao_permuta: novaVenda.descricao_permuta,
+                quantidade_itens: novaVenda.VendasItens.length,
+                itens: novaVenda.VendasItens.map(item => ({
+                    id: item.id,
+                    quantidade: item.quatidade,
+                    roupa: {
+                        ...item.Roupa,
+                        estoque_atualizado: item.Roupa.quantidade // Quantidade após a venda
+                    }
+                })),
+                resumo: {
+                    total_itens_vendidos: novaVenda.VendasItens.reduce((acc, item) => acc + item.quatidade, 0),
+                    valor_com_desconto: novaVenda.valor_total - novaVenda.desconto,
+                    diferenca_pagamento: novaVenda.valor_pago - (novaVenda.valor_total - novaVenda.desconto)
+                }
+            };
+        } catch (error) {
+            // Repassar erros de validação de estoque
+            throw new Error(error.message);
+        }
+    }
+
+    // Atualizar venda existente
+    static async updateVenda(id, updateData) {
+        try {
+            const vendaAtualizada = await VendasRepository.updateVenda(id, updateData);
+            
+            return {
+                id: vendaAtualizada.id,
+                data_venda: vendaAtualizada.data_venda,
+                forma_pgto: vendaAtualizada.forma_pgto,
+                valor_total: vendaAtualizada.valor_total,
+                desconto: vendaAtualizada.desconto,
+                valor_pago: vendaAtualizada.valor_pago,
+                descricao_permuta: vendaAtualizada.descricao_permuta,
+                quantidade_itens: vendaAtualizada.VendasItens.length,
+                itens: vendaAtualizada.VendasItens.map(item => ({
+                    id: item.id,
+                    quantidade: item.quatidade,
+                    roupa: item.Roupa
+                }))
+            };
+        } catch (error) {
+            throw new Error(error.message);
+        }
+    }
+
+    // Deletar venda
+    static async deleteVenda(id) {
+        try {
+            await VendasRepository.deleteVenda(id);
+            return { message: "Venda deletada com sucesso e estoque restaurado" };
+        } catch (error) {
+            throw new Error(error.message);
+        }
+    }
 }
 
 export default VendasService;

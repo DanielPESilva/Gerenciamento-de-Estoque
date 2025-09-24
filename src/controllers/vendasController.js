@@ -103,3 +103,132 @@ export const getStats = async (req, res) => {
         message: "Estatísticas de vendas"
     });
 };
+
+export const create = async (req, res) => {
+    // Validação dos dados de entrada
+    const bodyValidation = VendasSchema.create.safeParse(req.body);
+    
+    if (!bodyValidation.success) {
+        throw new APIError(
+            bodyValidation.error?.issues?.map(err => ({
+                path: err.path.join('.'),
+                message: err.message
+            })) || [{ path: "validation", message: "Erro de validação" }],
+            400
+        );
+    }
+
+    try {
+        const novaVenda = await VendasService.createVenda(bodyValidation.data);
+        
+        return res.status(201).json({
+            success: true,
+            message: "Venda criada com sucesso",
+            data: novaVenda
+        });
+    } catch (error) {
+        // Tratar erros específicos de estoque
+        if (error.message.includes("Estoque insuficiente") || 
+            error.message.includes("não encontrado")) {
+            throw new APIError([{ 
+                path: "estoque", 
+                message: error.message 
+            }], 400);
+        }
+        
+        throw new APIError([{ 
+            path: "venda", 
+            message: error.message || "Erro ao criar venda" 
+        }], 500);
+    }
+};
+
+export const update = async (req, res) => {
+    // Validação do ID
+    const paramValidation = VendasSchema.id.safeParse(req.params);
+    
+    if (!paramValidation.success) {
+        throw new APIError(
+            paramValidation.error?.issues?.map(err => ({
+                path: err.path.join('.'),
+                message: err.message
+            })) || [{ path: "validation", message: "Erro de validação do ID" }],
+            400
+        );
+    }
+
+    // Validação dos dados de atualização
+    const bodyValidation = VendasSchema.update.safeParse(req.body);
+    
+    if (!bodyValidation.success) {
+        throw new APIError(
+            bodyValidation.error?.issues?.map(err => ({
+                path: err.path.join('.'),
+                message: err.message
+            })) || [{ path: "validation", message: "Erro de validação" }],
+            400
+        );
+    }
+
+    const { id } = paramValidation.data;
+
+    try {
+        const vendaAtualizada = await VendasService.updateVenda(id, bodyValidation.data);
+        
+        return res.status(200).json({
+            success: true,
+            message: "Venda atualizada com sucesso",
+            data: vendaAtualizada
+        });
+    } catch (error) {
+        if (error.message.includes("não encontrada")) {
+            throw new APIError([{ 
+                path: "venda", 
+                message: "Venda não encontrada" 
+            }], 404);
+        }
+        
+        throw new APIError([{ 
+            path: "venda", 
+            message: error.message || "Erro ao atualizar venda" 
+        }], 500);
+    }
+};
+
+export const remove = async (req, res) => {
+    // Validação do ID
+    const paramValidation = VendasSchema.id.safeParse(req.params);
+    
+    if (!paramValidation.success) {
+        throw new APIError(
+            paramValidation.error?.issues?.map(err => ({
+                path: err.path.join('.'),
+                message: err.message
+            })) || [{ path: "validation", message: "Erro de validação do ID" }],
+            400
+        );
+    }
+
+    const { id } = paramValidation.data;
+
+    try {
+        const result = await VendasService.deleteVenda(id);
+        
+        return res.status(200).json({
+            success: true,
+            message: result.message
+        });
+    } catch (error) {
+        if (error.message.includes("não encontrada")) {
+            throw new APIError([{ 
+                path: "venda", 
+                message: "Venda não encontrada" 
+            }], 404);
+        }
+        
+        throw new APIError([{ 
+            path: "venda", 
+            message: error.message || "Erro ao deletar venda" 
+        }], 500);
+    }
+};

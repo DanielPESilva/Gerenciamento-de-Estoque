@@ -28,6 +28,73 @@ class VendasSchema {
             z.number().min(0, "Valor máximo deve ser maior ou igual a 0").optional()
         )
     });
+
+    static create = z.object({
+        forma_pgto: z.enum(
+            ["Pix", "Dinheiro", "Cartão de Crédito", "Cartão de Débito", "Boleto", "Cheque", "Permuta"],
+            { message: "Forma de pagamento inválida" }
+        ),
+        valor_total: z.number().min(0, "Valor total deve ser maior ou igual a 0"),
+        desconto: z.number().min(0, "Desconto deve ser maior ou igual a 0").default(0),
+        valor_pago: z.number().min(0, "Valor pago deve ser maior ou igual a 0"),
+        descricao_permuta: z.string().optional(), // Obrigatório apenas quando forma_pgto = "Permuta"
+        nome_cliente: z.string().min(2, "Nome do cliente deve ter pelo menos 2 caracteres").optional(),
+        telefone_cliente: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos").optional(),
+        itens: z.array(
+            z.preprocess((data) => {
+                // Remove campos undefined para evitar problemas de validação
+                if (data && typeof data === 'object') {
+                    const cleanData = { ...data };
+                    if (cleanData.roupas_id === undefined) delete cleanData.roupas_id;
+                    if (cleanData.nome_item === undefined) delete cleanData.nome_item;
+                    return cleanData;
+                }
+                return data;
+            }, z.object({
+                // Aceita tanto ID quanto nome do item
+                roupas_id: z.number().int().min(1, "ID da roupa deve ser um número válido").optional(),
+                nome_item: z.string().min(1, "Nome do item deve ter pelo menos 1 caractere").optional(),
+                quantidade: z.number().int().min(1, "Quantidade deve ser pelo menos 1")
+            }).refine((data) => {
+                // Deve ter pelo menos um: roupas_id OU nome_item
+                return data.roupas_id || data.nome_item;
+            }, {
+                message: "Deve informar o 'roupas_id' OU o 'nome_item' do produto"
+            }))
+        ).min(1, "Deve haver pelo menos um item na venda")
+    }).refine((data) => {
+        // Se for permuta, descricao_permuta é obrigatória
+        if (data.forma_pgto === "Permuta") {
+            return data.descricao_permuta && data.descricao_permuta.trim().length > 0;
+        } else {
+            // Para outras formas de pagamento, valor_pago deve ser <= valor_total
+            return data.valor_pago <= data.valor_total;
+        }
+    }, {
+        message: "Para permuta, descrição é obrigatória. Para outras formas, valor pago não pode ser maior que valor total."
+    }).transform((data) => {
+        // Se for permuta, forçar valores como zero
+        if (data.forma_pgto === "Permuta") {
+            data.valor_total = 0;
+            data.desconto = 0;
+            data.valor_pago = 0;
+        }
+        return data;
+    });
+
+    static update = z.object({
+        forma_pgto: z.enum(
+            ["Pix", "Dinheiro", "Cartão de Crédito", "Cartão de Débito", "Boleto", "Cheque", "Permuta"],
+            { message: "Forma de pagamento inválida" }
+        ).optional(),
+        valor_total: z.number().min(0, "Valor total deve ser maior ou igual a 0").optional(),
+        desconto: z.number().min(0, "Desconto deve ser maior ou igual a 0").optional(),
+        valor_pago: z.number().min(0, "Valor pago deve ser maior ou igual a 0").optional(),
+        descricao_permuta: z.string().optional(),
+        nome_cliente: z.string().min(2, "Nome do cliente deve ter pelo menos 2 caracteres").optional(),
+        telefone_cliente: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos").optional()
+    });
+
 }
 
 export default VendasSchema;
