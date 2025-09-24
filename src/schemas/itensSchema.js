@@ -42,6 +42,21 @@ class ItensSchema {
         cor: z.string().optional(),
         tamanho: z.string().optional()
     });
+
+    static quantidade = z.object({
+        quantidade: z.number().int().positive("Quantidade deve ser um número positivo")
+    });
+
+    static search = z.object({
+        q: z.string().min(1, "Termo de busca deve ter pelo menos 1 caractere").optional(),
+        nome: z.string().min(1, "Nome deve ter pelo menos 1 caractere").optional(),
+        limit: z.preprocess(
+            (val) => val ? parseInt(val) : 10,
+            z.number().int().min(1, "Limit deve ser pelo menos 1").max(50, "Limit deve ser no máximo 50").optional().default(10)
+        )
+    }).refine((data) => data.q || data.nome, {
+        message: "Deve informar 'q' ou 'nome' para buscar"
+    });
 }
 
 export default ItensSchema;

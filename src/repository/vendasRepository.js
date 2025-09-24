@@ -157,20 +157,28 @@ class VendasRepository {
                 if (roupa.quantidade < item.quantidade) {
                     throw new Error(`Estoque insuficiente para ${roupa.nome}. Disponível: ${roupa.quantidade}, Solicitado: ${item.quantidade}`);
                 }
-                
+
                 // Adicionar o ID resolvido ao item para uso posterior
                 item.roupas_id_resolvido = roupa.id;
             }
 
             // 2. Criar a venda
             const novaVenda = await tx.vendas.create({
-                data: dadosVenda
+                data: {
+                    forma_pgto: dadosVenda.forma_pgto,
+                    valor_total: dadosVenda.valor_total,
+                    desconto: dadosVenda.desconto,
+                    valor_pago: dadosVenda.valor_pago,
+                    descricao_permuta: dadosVenda.descricao_permuta,
+                    nome_cliente: dadosVenda.nome_cliente,
+                    telefone_cliente: dadosVenda.telefone_cliente
+                }
             });
 
             // 3. Criar os itens da venda e atualizar estoque
             for (const item of itens) {
                 const roupasId = item.roupas_id_resolvido || item.roupas_id;
-                
+
                 // Criar item da venda
                 await tx.vendasItens.create({
                     data: {
@@ -281,9 +289,9 @@ class VendasRepository {
     // Função auxiliar para resolver item por ID ou nome
     static async resolverItem(itemData, tx = prisma) {
         const { roupas_id, nome_item } = itemData;
-        
+
         let roupa;
-        
+
         if (roupas_id) {
             // Buscar por ID (mais rápido)
             roupa = await tx.roupas.findUnique({
@@ -293,16 +301,16 @@ class VendasRepository {
         } else if (nome_item) {
             // Buscar por nome (busca exata primeiro, depois com contains se não encontrar)
             roupa = await tx.roupas.findFirst({
-                where: { 
+                where: {
                     nome: nome_item.trim()
                 },
                 select: { id: true, nome: true, quantidade: true }
             });
-            
+
             // Se não encontrou com nome exato, tenta busca parcial
             if (!roupa) {
                 roupa = await tx.roupas.findFirst({
-                    where: { 
+                    where: {
                         nome: {
                             contains: nome_item.trim()
                         }
@@ -311,12 +319,12 @@ class VendasRepository {
                 });
             }
         }
-        
+
         if (!roupa) {
             const identificador = roupas_id ? `ID ${roupas_id}` : `nome "${nome_item}"`;
             throw new Error(`Item não encontrado com ${identificador}`);
         }
-        
+
         return roupa;
     }
 }

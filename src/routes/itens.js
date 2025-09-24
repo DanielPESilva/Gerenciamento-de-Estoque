@@ -7,6 +7,9 @@ const router = express.Router();
 // GET /api/itens
 router.get('/', wrapException(ItensController.getAll));
 
+// GET /api/itens/search - Buscar itens por nome (deve vir antes de /:id)
+router.get('/search', wrapException(ItensController.searchByName));
+
 // GET /api/itens/:id
 router.get('/:id', wrapException(ItensController.getById));
 

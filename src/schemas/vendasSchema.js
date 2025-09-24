@@ -38,6 +38,8 @@ class VendasSchema {
         desconto: z.number().min(0, "Desconto deve ser maior ou igual a 0").default(0),
         valor_pago: z.number().min(0, "Valor pago deve ser maior ou igual a 0"),
         descricao_permuta: z.string().optional(), // Obrigatório apenas quando forma_pgto = "Permuta"
+        nome_cliente: z.string().min(2, "Nome do cliente deve ter pelo menos 2 caracteres").optional(),
+        telefone_cliente: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos").optional(),
         itens: z.array(
             z.preprocess((data) => {
                 // Remove campos undefined para evitar problemas de validação
@@ -88,7 +90,9 @@ class VendasSchema {
         valor_total: z.number().min(0, "Valor total deve ser maior ou igual a 0").optional(),
         desconto: z.number().min(0, "Desconto deve ser maior ou igual a 0").optional(),
         valor_pago: z.number().min(0, "Valor pago deve ser maior ou igual a 0").optional(),
-        descricao_permuta: z.string().optional()
+        descricao_permuta: z.string().optional(),
+        nome_cliente: z.string().min(2, "Nome do cliente deve ter pelo menos 2 caracteres").optional(),
+        telefone_cliente: z.string().min(10, "Telefone deve ter pelo menos 10 dígitos").optional()
     });
 
 }

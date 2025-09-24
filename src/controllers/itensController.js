@@ -234,11 +234,7 @@ class ItensController {
         }
 
         // Validação da quantidade a adicionar
-        const quantidadeSchema = z.object({
-            quantidade: z.number().int().positive("Quantidade deve ser um número positivo")
-        });
-
-        const bodyValidation = quantidadeSchema.safeParse(req.body);
+        const bodyValidation = ItensSchema.quantidade.safeParse(req.body);
         
         if (!bodyValidation.success) {
             throw new APIError(
@@ -295,11 +291,7 @@ class ItensController {
         }
 
         // Validação da quantidade a remover
-        const quantidadeSchema = z.object({
-            quantidade: z.number().int().positive("Quantidade deve ser um número positivo")
-        });
-
-        const bodyValidation = quantidadeSchema.safeParse(req.body);
+        const bodyValidation = ItensSchema.quantidade.safeParse(req.body);
         
         if (!bodyValidation.success) {
             throw new APIError(
@@ -351,15 +343,7 @@ class ItensController {
 
     // Buscar itens por nome (para autocomplete)
     static async searchByName(req, res) {
-        const searchSchema = z.object({
-            q: z.string().min(1, "Query de busca deve ter pelo menos 1 caractere"),
-            limit: z.preprocess(
-                (val) => val ? parseInt(val) : 10,
-                z.number().int().min(1).max(20).optional().default(10)
-            )
-        });
-
-        const queryValidation = searchSchema.safeParse(req.query);
+        const queryValidation = ItensSchema.search.safeParse(req.query);
         
         if (!queryValidation.success) {
             throw new APIError(
@@ -371,14 +355,15 @@ class ItensController {
             );
         }
 
-        const { q: searchTerm, limit } = queryValidation.data;
+        const { q: searchTerm, nome, limit } = queryValidation.data;
+        const termoBusca = searchTerm || nome;
 
-        const result = await ItensService.searchByName(searchTerm, limit);
+        const result = await ItensService.searchByName(termoBusca, limit);
         
         return res.status(200).json({
             success: true,
             data: result,
-            message: `${result.length} item(ns) encontrado(s)`
+            message: `${result.length} itens encontrados`
         });
     }
 }
