@@ -2,7 +2,7 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 
-import clienteRouter from "./routes/cliente.js";
+import clientesRouter from "./routes/clientes.js";
 import itensRouter from "./routes/itens.js";
 import usuariosRouter from "./routes/usuarios.js";
 import vendasRouter from "./routes/vendas.js";
@@ -14,7 +14,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/clientes", clienteRouter);
+app.use("/api/clientes", clientesRouter);
 app.use("/api/itens", itensRouter);
 app.use("/api/usuarios", usuariosRouter);
 app.use("/api/vendas", vendasRouter);
