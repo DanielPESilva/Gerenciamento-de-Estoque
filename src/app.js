@@ -1,6 +1,8 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import swaggerUi from "swagger-ui-express";
+import swaggerDocument from "./docs/index.js";
 
 import clientesRouter from "./routes/clientes.js";
 import itensRouter from "./routes/itens.js";
@@ -14,6 +16,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// Documentação Swagger
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
+    customCss: '.swagger-ui .topbar { display: none }',
+    customSiteTitle: "DressFy API - Documentação"
+}));
+
+// Rotas da API
 app.use("/api/clientes", clientesRouter);
 app.use("/api/itens", itensRouter);
 app.use("/api/usuarios", usuariosRouter);
@@ -26,6 +35,11 @@ app.get("/health", (req, res) => {
         message: "API funcionando corretamente",
         timestamp: new Date().toISOString()
     });
+});
+
+// Redirecionamento da raiz para documentação
+app.get("/", (req, res) => {
+    res.redirect("/api-docs");
 });
 
 export default app;
