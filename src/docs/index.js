@@ -3,6 +3,7 @@ import commonResponses from './utils/commonResponses.js';
 import itensSchema from './schemas/itensSchema.js';
 import usuariosSchema from './schemas/usuariosSchema.js';
 import vendasSchema from './schemas/vendasSchema.js';
+import condicionaisSchema from './schemas/CondicionaisSchema.js';
 import itensRouter from './routes/itensRouter.js';
 import usuariosRouter from './routes/usuariosRouter.js';
 import vendasRouter from './routes/vendasRouter.js';
