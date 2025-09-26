@@ -9,6 +9,7 @@ import itensRouter from "./routes/itens.js";
 import usuariosRouter from "./routes/usuarios.js";
 import vendasRouter from "./routes/vendas.js";
 import condicionaisRouter from "./routes/condicionais.js";
+import comprasRouter from "./routes/compras.js";
 
 dotenv.config();
 
@@ -29,6 +30,7 @@ app.use("/api/itens", itensRouter);
 app.use("/api/usuarios", usuariosRouter);
 app.use("/api/vendas", vendasRouter);
 app.use("/api/condicionais", condicionaisRouter);
+app.use("/api/compras", comprasRouter);
 
 // Rota de health check
 app.get("/health", (req, res) => {

@@ -4,18 +4,24 @@ import itensSchema from './schemas/itensSchema.js';
 import usuariosSchema from './schemas/usuariosSchema.js';
 import vendasSchema from './schemas/vendasSchema.js';
 import condicionaisSchema from './schemas/CondicionaisSchema.js';
+import comprasSchema from './schemas/comprasSchema.js';
+import clientesSchema from './schemas/clientesSchema.js';
 import itensRouter from './routes/itensRouter.js';
 import usuariosRouter from './routes/usuariosRouter.js';
+import clientesRouter from './routes/clientesRouter.js';
 import vendasRouter from './routes/vendasRouter.js';
 import condicionaisRouter from './routes/condicionaisRouter.js';
+import comprasRouter from './routes/comprasRouter.js';
 
 const swaggerDocument = {
   ...swaggerHead,
   paths: {
     ...itensRouter,
     ...usuariosRouter,
+    ...clientesRouter,
     ...vendasRouter,
-    ...condicionaisRouter
+    ...condicionaisRouter,
+    ...comprasRouter
   },
   components: {
     schemas: {
@@ -267,6 +273,27 @@ const swaggerDocument = {
           }
         }
       },
+      
+      // Schemas de Clientes
+      Cliente: clientesSchema.Cliente,
+      ClienteCreate: clientesSchema.ClienteCreate,
+      ClienteUpdate: clientesSchema.ClienteUpdate,
+      ClienteLista: clientesSchema.ClienteLista,
+      ClienteResposta: clientesSchema.ClienteResposta,
+      ClienteErro: clientesSchema.ClienteErro,
+      ClienteErroValidacao: clientesSchema.ClienteErroValidacao,
+      
+      // Schemas de Compras
+      CompraCreate: comprasSchema.CompraCreate,
+      CompraUpdate: comprasSchema.CompraUpdate,
+      CompraCompleta: comprasSchema.CompraCompleta,
+      CompraItem: comprasSchema.CompraItem,
+      CompraItemRaw: comprasSchema.CompraItemRaw,
+      CompraAdicionarItem: comprasSchema.CompraAdicionarItem,
+      CompraAtualizarItem: comprasSchema.CompraAtualizarItem,
+      CompraRelatorio: comprasSchema.CompraRelatorio,
+      CompraFinalizacaoResposta: comprasSchema.CompraFinalizacaoResposta,
+      
       ErrorResponse: {
         type: "object",
         properties: {
