@@ -338,7 +338,7 @@ class CondicionaisRepository {
     }
 
     // Finalizar condicional (marcar como devolvido e retornar todos os itens)
-    static async finalizarCondicional(id) {
+    static async finalizarCondicional(id, opcoes = {}) {
         return await prisma.$transaction(async (tx) => {
             // Buscar todos os itens do condicional
             const itensCondicional = await tx.condicionaisItens.findMany({
@@ -370,9 +370,14 @@ class CondicionaisRepository {
             }
 
             // Marcar condicional como devolvido
+            const updateData = { devolvido: opcoes.devolvido !== undefined ? opcoes.devolvido : true };
+            if (opcoes.observacoes) {
+                updateData.observacoes = opcoes.observacoes;
+            }
+
             return await tx.condicionais.update({
                 where: { id },
-                data: { devolvido: true },
+                data: updateData,
                 include: {
                     Cliente: {
                         select: {
@@ -451,6 +456,53 @@ class CondicionaisRepository {
             condicionais_ativos: ativo,
             condicionais_devolvidos: devolvido
         };
+    }
+
+    // Atualizar itens de um condicional (para conversão em venda)
+    static async atualizarItensCondicional(condicionalId, itensRestantes) {
+        return await prisma.$transaction(async (tx) => {
+            // Buscar todos os itens atuais do condicional
+            const itensAtuais = await tx.condicionaisItens.findMany({
+                where: { condicionais_id: condicionalId }
+            });
+
+            // Remover itens que não estão mais na lista
+            for (const itemAtual of itensAtuais) {
+                const itemRestante = itensRestantes.find(
+                    item => item.roupas_id === itemAtual.roupas_id
+                );
+
+                if (!itemRestante) {
+                    // Item não está mais no condicional, remove
+                    await tx.condicionaisItens.delete({
+                        where: { id: itemAtual.id }
+                    });
+                } else if (itemRestante.quantidade !== itemAtual.quatidade) {
+                    // Quantidade mudou, atualiza
+                    await tx.condicionaisItens.update({
+                        where: { id: itemAtual.id },
+                        data: { quatidade: itemRestante.quantidade }
+                    });
+                }
+            }
+        });
+    }
+
+    // Devolver item específico ao estoque (para conversão em venda)
+    static async devolverItemAoEstoque(roupasId, quantidade) {
+        await prisma.roupas.update({
+            where: { id: roupasId },
+            data: {
+                quantidade: {
+                    increment: quantidade
+                }
+            }
+        });
+    }
+
+    // Buscar por ID (alias para compatibilidade)
+    static async buscarPorId(id) {
+        return await this.getCondicionalById(id);
     }
 }
 

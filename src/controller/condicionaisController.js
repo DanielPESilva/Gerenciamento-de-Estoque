@@ -1,5 +1,5 @@
 import CondicionaisService from '../services/condicionaisService.js';
-import condicionaisSchemas from '../schemas/condicionaisSchema.js';
+import CondicionaisSchema from '../schemas/condicionaisSchema.js';
 
 class CondicionaisController {
     // GET /condicionais - Listar condicionais
@@ -64,7 +64,7 @@ class CondicionaisController {
     static async criarCondicional(req, res) {
         try {
             // Validar dados de entrada
-            const validationResult = condicionaisSchemas.condicionaisCreateSchema.safeParse(req.body);
+            const validationResult = CondicionaisSchema.create.safeParse(req.body);
 
             if (!validationResult.success) {
                 const errors = validationResult.error.errors.map(error => ({
@@ -120,7 +120,7 @@ class CondicionaisController {
             const { id } = req.params;
 
             // Validar dados de entrada
-            const validationResult = condicionaisSchemas.condicionaisUpdateSchema.safeParse(req.body);
+            const validationResult = CondicionaisSchema.update.safeParse(req.body);
 
             if (!validationResult.success) {
                 const errors = validationResult.error.errors.map(error => ({
@@ -168,7 +168,7 @@ class CondicionaisController {
             const { id } = req.params;
 
             // Validar dados de entrada
-            const validationResult = condicionaisSchemas.condicionaisDevolverItemSchema.safeParse(req.body);
+            const validationResult = CondicionaisSchema.devolverItem.safeParse(req.body);
 
             if (!validationResult.success) {
                 const errors = validationResult.error.errors.map(error => ({
@@ -222,7 +222,7 @@ class CondicionaisController {
 
             // Validar dados de entrada (opcional)
             if (req.body && Object.keys(req.body).length > 0) {
-                const validationResult = condicionaisSchemas.condicionaisFinalizarSchema.safeParse(req.body);
+                const validationResult = CondicionaisSchema.finalizarCondicional.safeParse(req.body);
 
                 if (!validationResult.success) {
                     const errors = validationResult.error.errors.map(error => ({
@@ -315,6 +315,65 @@ class CondicionaisController {
             });
 
         } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: `Erro interno do servidor: ${error.message}`,
+                code: 'INTERNAL_SERVER_ERROR'
+            });
+        }
+    }
+
+    // POST /condicionais/:id/converter-venda - Converter condicional em venda
+    static async converterEmVenda(req, res) {
+        try {
+            // Validar ID
+            const idValidation = CondicionaisSchema.id.safeParse(req.params);
+            if (!idValidation.success) {
+                return res.status(400).json({
+                    success: false,
+                    message: "ID inválido",
+                    errors: idValidation.error.errors,
+                    code: 'INVALID_ID'
+                });
+            }
+
+            // Validar dados da conversão
+            console.log("Dados recebidos:", req.body);
+            const dataValidation = CondicionaisSchema.converterVenda.safeParse(req.body);
+            if (!dataValidation.success) {
+                console.log("Erros de validação:", dataValidation.error.errors);
+                return res.status(400).json({
+                    success: false,
+                    message: "Dados inválidos para conversão em venda",
+                    errors: dataValidation.error.errors,
+                    code: 'INVALID_DATA'
+                });
+            }
+
+            const { id } = idValidation.data;
+            const dadosVenda = dataValidation.data;
+
+            const resultado = await CondicionaisService.converterEmVenda(id, dadosVenda);
+
+            if (!resultado.success) {
+                const statusCode = resultado.code === 'CONDICIONAL_NOT_FOUND' ? 404 : 
+                                 resultado.code === 'INVALID_QUANTITY' ? 409 : 400;
+
+                return res.status(statusCode).json({
+                    success: false,
+                    message: resultado.message,
+                    code: resultado.code
+                });
+            }
+
+            return res.status(201).json({
+                success: true,
+                message: resultado.message,
+                data: resultado.data
+            });
+
+        } catch (error) {
+            console.error("Erro ao converter condicional em venda:", error);
             return res.status(500).json({
                 success: false,
                 message: `Erro interno do servidor: ${error.message}`,

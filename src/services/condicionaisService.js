@@ -1,4 +1,5 @@
 import CondicionaisRepository from '../repository/condicionaisRepository.js';
+import VendasService from './vendasService.js';
 
 class CondicionaisService {
     // Listar condicionais com filtros
@@ -493,6 +494,171 @@ class CondicionaisService {
                 success: false,
                 message: `Erro ao obter estatísticas: ${error.message}`,
                 code: 'STATS_ERROR'
+            };
+        }
+    }
+
+    // Converter condicional em venda
+    static async converterEmVenda(condicionalId, dadosVenda) {
+        try {
+            // 1. Buscar o condicional
+            const condicional = await CondicionaisRepository.buscarPorId(condicionalId);
+            if (!condicional) {
+                return {
+                    success: false,
+                    message: 'Condicional não encontrado',
+                    code: 'CONDICIONAL_NOT_FOUND'
+                };
+            }
+
+            if (condicional.devolvido) {
+                return {
+                    success: false,
+                    message: 'Condicional já foi finalizado',
+                    code: 'CONDICIONAL_ALREADY_FINISHED'
+                };
+            }
+
+            // 2. Processar itens para venda
+            let itensVenda = [];
+            let itensRestantes = [];
+            
+            if (dadosVenda.itens_vendidos === 'todos') {
+                // Vender todos os itens
+                itensVenda = condicional.CondicionaisItens.map(item => ({
+                    roupas_id: item.roupas_id,
+                    nome_item: item.Roupa.nome,
+                    quantidade: item.quatidade, // Note o nome no banco
+                    preco: item.Roupa.preco
+                }));
+            } else {
+                // Vender itens específicos
+                for (const itemVenda of dadosVenda.itens_vendidos) {
+                    const itemCondicional = condicional.CondicionaisItens.find(
+                        item => item.roupas_id === itemVenda.roupas_id
+                    );
+
+                    if (!itemCondicional) {
+                        return {
+                            success: false,
+                            message: `Item ${itemVenda.roupas_id} não encontrado no condicional`,
+                            code: 'ITEM_NOT_IN_CONDICIONAL'
+                        };
+                    }
+
+                    if (itemVenda.quantidade > itemCondicional.quatidade) {
+                        return {
+                            success: false,
+                            message: `Quantidade solicitada (${itemVenda.quantidade}) maior que disponível (${itemCondicional.quatidade}) para item ${itemCondicional.Roupa.nome}`,
+                            code: 'INVALID_QUANTITY'
+                        };
+                    }
+
+                    // Adicionar à venda
+                    itensVenda.push({
+                        roupas_id: itemVenda.roupas_id,
+                        nome_item: itemCondicional.Roupa.nome,
+                        quantidade: itemVenda.quantidade,
+                        preco: itemCondicional.Roupa.preco
+                    });
+
+                    // Calcular itens restantes no condicional
+                    const quantidadeRestante = itemCondicional.quatidade - itemVenda.quantidade;
+                    if (quantidadeRestante > 0) {
+                        itensRestantes.push({
+                            roupas_id: itemVenda.roupas_id,
+                            quantidade: quantidadeRestante
+                        });
+                    }
+                }
+
+                // Adicionar itens que não foram vendidos aos restantes
+                for (const item of condicional.CondicionaisItens) {
+                    const itemVendido = dadosVenda.itens_vendidos.find(
+                        vendido => vendido.roupas_id === item.roupas_id
+                    );
+                    
+                    if (!itemVendido) {
+                        itensRestantes.push({
+                            roupas_id: item.roupas_id,
+                            quantidade: item.quatidade
+                        });
+                    }
+                }
+            }
+
+            // 3. Calcular valor total da venda
+            const valorTotal = itensVenda.reduce((total, item) => {
+                return total + (item.preco * item.quantidade);
+            }, 0);
+
+            // 4. Criar venda
+            const valorFinal = valorTotal - (dadosVenda.desconto || 0);
+            const dadosVendaCompleta = {
+                forma_pgto: dadosVenda.forma_pagamento,
+                valor_total: parseFloat(valorTotal.toFixed(2)),
+                desconto: parseFloat((dadosVenda.desconto || 0).toFixed(2)),
+                valor_pago: parseFloat(valorFinal.toFixed(2)),
+                nome_cliente: condicional.Cliente ? condicional.Cliente.nome : undefined,
+                telefone_cliente: condicional.Cliente ? condicional.Cliente.telefone : undefined,
+                itens: itensVenda
+            };
+
+            const venda = await VendasService.createVenda(dadosVendaCompleta);
+
+            // 5. Atualizar condicional
+            if (itensRestantes.length === 0) {
+                // Se não há itens restantes, finalizar condicional
+                await CondicionaisRepository.finalizarCondicional(condicionalId, {
+                    devolvido: true,
+                    observacoes: `Convertido em venda #${venda.id}${dadosVenda.observacoes ? ` - ${dadosVenda.observacoes}` : ''}`
+                });
+            } else {
+                // Atualizar quantidades dos itens restantes
+                await CondicionaisRepository.atualizarItensCondicional(condicionalId, itensRestantes);
+            }
+
+            // 6. Buscar condicional atualizado
+            const condicionalAtualizado = await CondicionaisRepository.buscarPorId(condicionalId);
+
+            // 7. Processar devoluções para o estoque dos itens restantes que foram removidos
+            const itensDevolvidos = [];
+            for (const item of condicional.CondicionaisItens) {
+                const itemRestante = itensRestantes.find(r => r.roupas_id === item.roupas_id);
+                const quantidadeDevolvida = item.quatidade - (itemRestante ? itemRestante.quantidade : 0);
+                
+                if (quantidadeDevolvida > 0) {
+                    await CondicionaisRepository.devolverItemAoEstoque(item.roupas_id, quantidadeDevolvida);
+                    itensDevolvidos.push({
+                        roupas_id: item.roupas_id,
+                        quantidade: quantidadeDevolvida,
+                        nome: item.Roupa.nome
+                    });
+                }
+            }
+
+            return {
+                success: true,
+                message: `Condicional convertido em venda com sucesso. ${itensVenda.length} item(ns) vendido(s)${itensRestantes.length > 0 ? `, ${itensRestantes.length} item(ns) ainda no condicional` : ', condicional finalizado'}`,
+                data: {
+                    venda: venda,
+                    condicional_atualizado: condicionalAtualizado,
+                    itens_vendidos: itensVenda,
+                    itens_devolvidos: itensDevolvidos,
+                    resumo: {
+                        valor_total_venda: valorTotal,
+                        desconto_aplicado: dadosVenda.desconto || 0,
+                        valor_final: valorTotal - (dadosVenda.desconto || 0),
+                        condicional_finalizado: itensRestantes.length === 0
+                    }
+                }
+            };
+
+        } catch (error) {
+            return {
+                success: false,
+                message: `Erro ao converter condicional em venda: ${error.message}`,
+                code: 'CONVERSION_ERROR'
             };
         }
     }

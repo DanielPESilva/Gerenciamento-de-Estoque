@@ -74,6 +74,21 @@ class CondicionaisSchema {
         devolvido: z.boolean().default(true),
         observacoes: z.string().optional()
     });
+
+    static converterVenda = z.object({
+        itens_vendidos: z.union([
+            z.literal("todos"),
+            z.array(z.object({
+                roupas_id: z.number().int().positive("ID da roupa deve ser positivo"),
+                quantidade: z.number().int().min(1, "Quantidade deve ser pelo menos 1")
+            })).min(1, "Deve especificar pelo menos um item para venda")
+        ]),
+        desconto: z.number().min(0, "Desconto deve ser maior ou igual a 0").default(0),
+        forma_pagamento: z.enum(["Pix", "Dinheiro", "Cartão de Crédito", "Cartão de Débito", "Boleto", "Cheque", "Permuta"], {
+            errorMap: () => ({ message: "Forma de pagamento deve ser: Pix, Dinheiro, Cartão de Crédito, Cartão de Débito, Boleto, Cheque ou Permuta" })
+        }),
+        observacoes: z.string().optional()
+    });
 }
 
 export default CondicionaisSchema;
