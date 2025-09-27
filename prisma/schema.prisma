@@ -105,6 +105,7 @@ model Roupas {
   HistoricoStatus   HistoricoStatus[]
   Usuario           Usuarios            @relation(fields: [usuarios_id], references: [id])
   VendasItens       VendasItens[]
+  Imagens           Imagens[]
 
   @@index([usuarios_id], map: "Roupas_usuarios_id_fkey")
 }
@@ -116,6 +117,17 @@ model Usuarios {
   senha     String
   criado_em DateTime @default(now())
   Roupas    Roupas[]
+}
+
+model Imagens {
+  id        Int      @id @default(autoincrement())
+  item_id   Int
+  url       String
+  descricao String?
+  criado_em DateTime @default(now())
+  Roupa     Roupas   @relation(fields: [item_id], references: [id], onDelete: Cascade)
+
+  @@index([item_id], map: "Imagens_item_id_fkey")
 }
 
 model Vendas {
