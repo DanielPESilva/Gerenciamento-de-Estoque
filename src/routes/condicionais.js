@@ -9,6 +9,10 @@ router.get('/', CondicionaisController.listarCondicionais);
 // Obter estatísticas
 router.get('/estatisticas', CondicionaisController.obterEstatisticas);
 
+// Relatórios
+router.get('/relatorios/ativos', CondicionaisController.obterRelatorioAtivos);
+router.get('/relatorios/devolvidos', CondicionaisController.obterRelatorioDevolvidos);
+
 // Buscar por ID
 router.get('/:id', CondicionaisController.buscarCondicionalPorId);
 
@@ -26,6 +30,9 @@ router.post('/:id/finalizar', CondicionaisController.finalizarCondicional);
 
 // Converter em venda
 router.post('/:id/converter-venda', CondicionaisController.converterEmVenda);
+
+// Atualizar status de itens
+router.patch('/itens/status', CondicionaisController.atualizarStatusItens);
 
 // Deletar condicional
 router.delete('/:id', CondicionaisController.deletarCondicional);

@@ -10,6 +10,7 @@ import usuariosRouter from "./routes/usuarios.js";
 import vendasRouter from "./routes/vendas.js";
 import condicionaisRouter from "./routes/condicionais.js";
 import comprasRouter from "./routes/compras.js";
+import baixaRouter from "./routes/baixa.js";
 
 dotenv.config();
 
@@ -31,6 +32,7 @@ app.use("/api/usuarios", usuariosRouter);
 app.use("/api/vendas", vendasRouter);
 app.use("/api/condicionais", condicionaisRouter);
 app.use("/api/compras", comprasRouter);
+app.use("/api/baixa", baixaRouter);
 
 // Rota de health check
 app.get("/health", (req, res) => {

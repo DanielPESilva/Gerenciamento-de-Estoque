@@ -381,6 +381,141 @@ class CondicionaisController {
             });
         }
     }
+
+    // GET /condicionais/relatorios/ativos - Relatório de condicionais ativos
+    static async obterRelatorioAtivos(req, res) {
+        try {
+            const filtros = {};
+            
+            if (req.query.cliente_id) {
+                filtros.cliente_id = parseInt(req.query.cliente_id);
+            }
+            
+            if (req.query.data_inicio) {
+                filtros.data_inicio = req.query.data_inicio;
+            }
+            
+            if (req.query.data_fim) {
+                filtros.data_fim = req.query.data_fim;
+            }
+            
+            if (req.query.vencidos === 'true') {
+                filtros.vencidos = true;
+            }
+
+            const resultado = await CondicionaisService.obterRelatorioAtivos(filtros);
+
+            if (!resultado.success) {
+                return res.status(400).json({
+                    success: false,
+                    message: resultado.message,
+                    code: resultado.code
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: resultado.message,
+                data: resultado.data
+            });
+
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: `Erro interno do servidor: ${error.message}`,
+                code: 'INTERNAL_SERVER_ERROR'
+            });
+        }
+    }
+
+    // GET /condicionais/relatorios/devolvidos - Relatório de condicionais devolvidos
+    static async obterRelatorioDevolvidos(req, res) {
+        try {
+            const filtros = {};
+            
+            if (req.query.cliente_id) {
+                filtros.cliente_id = parseInt(req.query.cliente_id);
+            }
+            
+            if (req.query.data_inicio) {
+                filtros.data_inicio = req.query.data_inicio;
+            }
+            
+            if (req.query.data_fim) {
+                filtros.data_fim = req.query.data_fim;
+            }
+
+            const resultado = await CondicionaisService.obterRelatorioDevolvidos(filtros);
+
+            if (!resultado.success) {
+                return res.status(400).json({
+                    success: false,
+                    message: resultado.message,
+                    code: resultado.code
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: resultado.message,
+                data: resultado.data
+            });
+
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: `Erro interno do servidor: ${error.message}`,
+                code: 'INTERNAL_SERVER_ERROR'
+            });
+        }
+    }
+
+    // PATCH /condicionais/itens/status - Atualizar status de itens
+    static async atualizarStatusItens(req, res) {
+        try {
+            const { roupas_ids, novo_status } = req.body;
+
+            // Validações básicas
+            if (!roupas_ids || !Array.isArray(roupas_ids) || roupas_ids.length === 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'roupas_ids deve ser um array não vazio',
+                    code: 'INVALID_ROUPAS_IDS'
+                });
+            }
+
+            if (!novo_status) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'novo_status é obrigatório',
+                    code: 'MISSING_STATUS'
+                });
+            }
+
+            const resultado = await CondicionaisService.atualizarStatusItens(roupas_ids, novo_status);
+
+            if (!resultado.success) {
+                return res.status(400).json({
+                    success: false,
+                    message: resultado.message,
+                    code: resultado.code
+                });
+            }
+
+            return res.status(200).json({
+                success: true,
+                message: resultado.message,
+                data: resultado.data
+            });
+
+        } catch (error) {
+            return res.status(500).json({
+                success: false,
+                message: `Erro interno do servidor: ${error.message}`,
+                code: 'INTERNAL_SERVER_ERROR'
+            });
+        }
+    }
 }
 
 export default CondicionaisController;
