@@ -122,47 +122,186 @@ const itensRouter = {
     get: {
       tags: ['Itens'],
       summary: 'Buscar itens por nome',
-      description: 'Busca itens pelo nome para funcionalidade de autocomplete',
+      description: 'Busca itens pelo nome para funcionalidade de autocomplete. Use "q" ou "nome" para buscar. Ideal para campos de busca em tempo real.',
       parameters: [
         {
           name: 'q',
           in: 'query',
-          description: 'Termo de busca',
+          description: 'Termo de busca geral (busca no nome do item)',
           required: false,
           schema: {
             type: 'string',
             minLength: 1,
-            example: 'Camiseta'
+            example: 'camiseta'
           }
         },
         {
           name: 'nome',
           in: 'query',
-          description: 'Nome específico para buscar',
+          description: 'Nome específico para buscar (alternativa ao "q")',
           required: false,
           schema: {
             type: 'string',
             minLength: 1,
-            example: 'Camiseta Básica'
+            example: 'vestido'
           }
         },
         {
           name: 'limit',
           in: 'query',
-          description: 'Limite de resultados',
+          description: 'Limite de resultados retornados',
           required: false,
           schema: {
             type: 'integer',
             minimum: 1,
             maximum: 50,
             default: 10,
-            example: 10
+            example: 5
           }
         }
       ],
       responses: {
-        '200': commonResponses.Success200,
-        '400': commonResponses.BadRequest400,
+        '200': {
+          description: 'Busca realizada com sucesso',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: {
+                    type: 'boolean',
+                    example: true
+                  },
+                  data: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        id: {
+                          type: 'integer',
+                          example: 4
+                        },
+                        nome: {
+                          type: 'string',
+                          example: 'Camiseta Básica'
+                        },
+                        tipo: {
+                          type: 'string',
+                          example: 'Camiseta'
+                        },
+                        cor: {
+                          type: 'string',
+                          example: 'Branco'
+                        },
+                        tamanho: {
+                          type: 'string',
+                          example: 'M'
+                        },
+                        preco: {
+                          type: 'number',
+                          format: 'float',
+                          example: 35.99
+                        },
+                        quantidade: {
+                          type: 'integer',
+                          example: 10
+                        },
+                        disponivel: {
+                          type: 'boolean',
+                          example: true
+                        }
+                      }
+                    }
+                  },
+                  message: {
+                    type: 'string',
+                    example: '1 itens encontrados'
+                  }
+                }
+              },
+              examples: {
+                'busca_por_camiseta': {
+                  summary: 'Busca por "camiseta"',
+                  value: {
+                    success: true,
+                    data: [
+                      {
+                        id: 4,
+                        nome: 'Camiseta Básica',
+                        tipo: 'Camiseta',
+                        cor: 'Branco',
+                        tamanho: 'M',
+                        preco: 35.99,
+                        quantidade: 10,
+                        disponivel: true
+                      }
+                    ],
+                    message: '1 itens encontrados'
+                  }
+                },
+                'busca_vazia': {
+                  summary: 'Nenhum resultado encontrado',
+                  value: {
+                    success: true,
+                    data: [],
+                    message: '0 itens encontrados'
+                  }
+                }
+              }
+            }
+          }
+        },
+        '400': {
+          description: 'Parâmetros inválidos',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: {
+                    type: 'boolean',
+                    example: false
+                  },
+                  message: {
+                    type: 'string',
+                    example: 'Erro de validação'
+                  },
+                  errors: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        path: {
+                          type: 'string',
+                          example: 'validation'
+                        },
+                        message: {
+                          type: 'string',
+                          example: 'Deve informar \'q\' ou \'nome\' para buscar'
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              examples: {
+                'parametros_obrigatorios': {
+                  summary: 'Faltam parâmetros de busca',
+                  value: {
+                    success: false,
+                    message: 'Erro de validação',
+                    errors: [
+                      {
+                        path: 'validation',
+                        message: 'Deve informar \'q\' ou \'nome\' para buscar'
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        },
         '500': commonResponses.InternalServerError500
       }
     }
@@ -272,23 +411,98 @@ const itensRouter = {
     delete: {
       tags: ['Itens'],
       summary: 'Deletar item',
-      description: 'Remove um item do sistema',
+      description: 'Remove um item do sistema. Retorna status 204 (No Content) quando bem-sucedido.',
       parameters: [
         {
           name: 'id',
           in: 'path',
-          description: 'ID do item',
+          description: 'ID do item a ser deletado',
           required: true,
           schema: {
             type: 'integer',
             minimum: 1,
-            example: 1
+            example: 3
           }
         }
       ],
       responses: {
-        '200': commonResponses.Success200,
-        '404': commonResponses.NotFound404,
+        '204': {
+          description: 'Item deletado com sucesso (sem conteúdo retornado)',
+          content: {}
+        },
+        '404': {
+          description: 'Item não encontrado',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: {
+                    type: 'boolean',
+                    example: false
+                  },
+                  errors: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        path: {
+                          type: 'string',
+                          example: 'ID'
+                        },
+                        message: {
+                          type: 'string',
+                          example: 'Item não encontrado com o ID informado'
+                        }
+                      }
+                    }
+                  }
+                }
+              },
+              example: {
+                success: false,
+                errors: [
+                  {
+                    path: 'ID',
+                    message: 'Item não encontrado com o ID informado'
+                  }
+                ]
+              }
+            }
+          }
+        },
+        '400': {
+          description: 'Parâmetros inválidos',
+          content: {
+            'application/json': {
+              schema: {
+                type: 'object',
+                properties: {
+                  success: {
+                    type: 'boolean',
+                    example: false
+                  },
+                  errors: {
+                    type: 'array',
+                    items: {
+                      type: 'object',
+                      properties: {
+                        path: {
+                          type: 'string',
+                          example: 'id'
+                        },
+                        message: {
+                          type: 'string',
+                          example: 'Expected number, received string'
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         '500': commonResponses.InternalServerError500
       }
     }

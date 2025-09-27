@@ -200,7 +200,10 @@ const usuariosRouter = {
         }
       ],
       responses: {
-        '200': commonResponses.Success200,
+        '204': {
+          description: 'Usuário deletado com sucesso (sem conteúdo retornado)',
+          content: {}
+        },
         '404': commonResponses.NotFound404,
         '422': {
           description: 'Erro de lógica - Usuário possui itens vinculados',
