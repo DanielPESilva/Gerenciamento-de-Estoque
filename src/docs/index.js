@@ -6,6 +6,7 @@ import vendasSchema from './schemas/vendasSchema.js';
 import condicionaisSchema from './schemas/CondicionaisSchema.js';
 import comprasSchema from './schemas/comprasSchema.js';
 import clientesSchema from './schemas/clientesSchema.js';
+import { baixaPaths, baixaSchemas } from './baixa.js';
 import itensRouter from './routes/itensRouter.js';
 import usuariosRouter from './routes/usuariosRouter.js';
 import clientesRouter from './routes/clientesRouter.js';
@@ -21,7 +22,8 @@ const swaggerDocument = {
     ...clientesRouter,
     ...vendasRouter,
     ...condicionaisRouter,
-    ...comprasRouter
+    ...comprasRouter,
+    ...baixaPaths
   },
   components: {
     schemas: {
@@ -293,6 +295,9 @@ const swaggerDocument = {
       CompraAtualizarItem: comprasSchema.CompraAtualizarItem,
       CompraRelatorio: comprasSchema.CompraRelatorio,
       CompraFinalizacaoResposta: comprasSchema.CompraFinalizacaoResposta,
+      
+      // Schemas de Baixa
+      ...baixaSchemas,
       
       ErrorResponse: {
         type: "object",

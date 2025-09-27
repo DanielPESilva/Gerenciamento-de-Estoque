@@ -500,6 +500,191 @@ class CondicionaisRepository {
         });
     }
 
+    // Atualizar status de itens (disponível/em_condicional)
+    static async atualizarStatusItens(roupasIds, novoStatus, criarHistorico = true) {
+        return await prisma.$transaction(async (tx) => {
+            const statusAtualizados = [];
+
+            for (const roupasId of roupasIds) {
+                // Buscar status atual
+                const roupa = await tx.roupas.findUnique({
+                    where: { id: roupasId },
+                    select: { 
+                        id: true, 
+                        nome: true,
+                        // Note: Assumindo que existe um campo status na tabela Roupas
+                        // Se não existir, remova esta linha
+                    }
+                });
+
+                if (!roupa) {
+                    throw new Error(`Roupa com ID ${roupasId} não encontrada`);
+                }
+
+                // Registrar histórico se solicitado
+                if (criarHistorico) {
+                    await tx.historicoStatus.create({
+                        data: {
+                            roupas_id: roupasId,
+                            status_anterior: 'disponivel', // Status padrão se não houver campo na tabela
+                            status_novo: novoStatus,
+                            alterado_em: new Date()
+                        }
+                    });
+                }
+
+                statusAtualizados.push({
+                    id: roupa.id,
+                    nome: roupa.nome,
+                    status_anterior: 'disponivel',
+                    status_novo: novoStatus
+                });
+            }
+
+            return statusAtualizados;
+        });
+    }
+
+    // Relatório de condicionais ativos
+    static async relatorioCondicionaisAtivos(filtros = {}) {
+        const where = { devolvido: false };
+
+        // Aplicar filtros
+        if (filtros.cliente_id) {
+            where.cliente_id = filtros.cliente_id;
+        }
+
+        if (filtros.data_inicio && filtros.data_fim) {
+            where.data = {
+                gte: new Date(filtros.data_inicio + "T00:00:00.000Z"),
+                lte: new Date(filtros.data_fim + "T23:59:59.999Z")
+            };
+        }
+
+        if (filtros.vencidos) {
+            // Buscar apenas condicionais vencidos (data_devolucao < hoje)
+            where.data_devolucao = {
+                lt: new Date()
+            };
+        }
+
+        const condicionaisAtivos = await prisma.condicionais.findMany({
+            where,
+            include: {
+                Cliente: {
+                    select: {
+                        id: true,
+                        nome: true,
+                        email: true,
+                        telefone: true
+                    }
+                },
+                CondicionaisItens: {
+                    include: {
+                        Roupa: {
+                            select: {
+                                id: true,
+                                nome: true,
+                                tipo: true,
+                                tamanho: true,
+                                cor: true,
+                                preco: true
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: {
+                data_devolucao: 'asc' // Ordenar por data de devolução (mais próximos primeiro)
+            }
+        });
+
+        // Calcular estatísticas
+        const estatisticas = {
+            total_ativos: condicionaisAtivos.length,
+            total_itens: condicionaisAtivos.reduce((acc, condicional) => 
+                acc + condicional.CondicionaisItens.reduce((itemAcc, item) => itemAcc + item.quatidade, 0), 0),
+            valor_total: condicionaisAtivos.reduce((acc, condicional) =>
+                acc + condicional.CondicionaisItens.reduce((itemAcc, item) => 
+                    itemAcc + (item.quatidade * item.Roupa.preco), 0), 0),
+            vencidos: condicionaisAtivos.filter(c => new Date(c.data_devolucao) < new Date()).length,
+            a_vencer_em_7_dias: condicionaisAtivos.filter(c => {
+                const dataVencimento = new Date(c.data_devolucao);
+                const hoje = new Date();
+                const seteDiasFrente = new Date(hoje.getTime() + (7 * 24 * 60 * 60 * 1000));
+                return dataVencimento >= hoje && dataVencimento <= seteDiasFrente;
+            }).length
+        };
+
+        return {
+            condicionais: condicionaisAtivos,
+            estatisticas
+        };
+    }
+
+    // Relatório de condicionais devolvidos
+    static async relatorioCondicionaisDevolvidos(filtros = {}) {
+        const where = { devolvido: true };
+
+        // Aplicar filtros
+        if (filtros.cliente_id) {
+            where.cliente_id = filtros.cliente_id;
+        }
+
+        if (filtros.data_inicio && filtros.data_fim) {
+            where.data = {
+                gte: new Date(filtros.data_inicio + "T00:00:00.000Z"),
+                lte: new Date(filtros.data_fim + "T23:59:59.999Z")
+            };
+        }
+
+        const condicionaisDevolvidos = await prisma.condicionais.findMany({
+            where,
+            include: {
+                Cliente: {
+                    select: {
+                        id: true,
+                        nome: true,
+                        email: true,
+                        telefone: true
+                    }
+                },
+                CondicionaisItens: {
+                    include: {
+                        Roupa: {
+                            select: {
+                                id: true,
+                                nome: true,
+                                tipo: true,
+                                tamanho: true,
+                                cor: true,
+                                preco: true
+                            }
+                        }
+                    }
+                }
+            },
+            orderBy: {
+                data: 'desc' // Ordenar por data de criação (mais recentes primeiro)
+            }
+        });
+
+        // Calcular estatísticas
+        const estatisticas = {
+            total_devolvidos: condicionaisDevolvidos.length,
+            total_itens_devolvidos: condicionaisDevolvidos.reduce((acc, condicional) => 
+                acc + condicional.CondicionaisItens.reduce((itemAcc, item) => itemAcc + item.quatidade, 0), 0),
+            valor_total_devolvido: condicionaisDevolvidos.reduce((acc, condicional) =>
+                acc + condicional.CondicionaisItens.reduce((itemAcc, item) => 
+                    itemAcc + (item.quatidade * item.Roupa.preco), 0), 0)
+        };
+
+        return {
+            condicionais: condicionaisDevolvidos,
+            estatisticas
+        };
+    }
+
     // Buscar por ID (alias para compatibilidade)
     static async buscarPorId(id) {
         return await this.getCondicionalById(id);

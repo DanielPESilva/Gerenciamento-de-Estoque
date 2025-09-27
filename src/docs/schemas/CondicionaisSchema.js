@@ -195,6 +195,77 @@
  *           type: integer
  *           description: Condicionais já devolvidos
  *           example: 125
+ *
+ *     ClienteInfo:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 1
+ *         nome:
+ *           type: string  
+ *           example: "Maria Silva"
+ *         email:
+ *           type: string
+ *           example: "maria@email.com"
+ *         telefone:
+ *           type: string
+ *           example: "(11) 99999-9999"
+ *
+ *     CondicionalItemDetalhado:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *           example: 1
+ *         quantidade:
+ *           type: integer
+ *           example: 2
+ *         roupa:
+ *           type: object
+ *           properties:
+ *             id:
+ *               type: integer
+ *               example: 5
+ *             nome:
+ *               type: string
+ *               example: "Vestido Floral"
+ *             tipo:
+ *               type: string
+ *               example: "vestido"
+ *             tamanho:
+ *               type: string
+ *               example: "M"
+ *             cor:
+ *               type: string
+ *               example: "azul"
+ *             preco:
+ *               type: number
+ *               format: float
+ *               example: 89.90
+ *             valor_total:
+ *               type: number
+ *               format: float
+ *               example: 179.80
+ *               description: "quantidade * preco"
+ *
+ *     StatusUpdateRequest:
+ *       type: object
+ *       required:
+ *         - roupas_ids
+ *         - novo_status
+ *       properties:
+ *         roupas_ids:
+ *           type: array
+ *           items:
+ *             type: integer
+ *           description: Array com IDs das roupas a serem atualizadas
+ *           example: [1, 2, 3]
+ *         novo_status:
+ *           type: string
+ *           enum: [disponivel, em_condicional, vendido]
+ *           description: Novo status para os itens
+ *           example: "em_condicional"
  */
 
 export default {};

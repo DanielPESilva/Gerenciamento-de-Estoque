@@ -225,15 +225,12 @@ export const remove = async (req, res) => {
             });
         }
 
-        // TODO: Verificar se cliente tem relacionamentos (vendas, condicionais)
-        // antes de permitir exclusão - implementar essa validação se necessário
-
         await ClientesService.deleteCliente(id);
 
-        return sendResponse(res, 200, {
-            data: null,
+        return sendResponse(res, 204, {
             message: "Cliente removido com sucesso"
         });
+        
     } catch (error) {
         console.error('Erro ao remover cliente:', error);
         

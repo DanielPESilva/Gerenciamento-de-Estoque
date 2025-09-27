@@ -13,6 +13,7 @@ model Baixa {
   quantidade Int
   data_baixa DateTime @default(now())
   motivo     String
+  observacao String?
   Roupa      Roupas   @relation(fields: [roupa_id], references: [id])
 
   @@index([roupa_id], map: "Baixa_roupa_id_fkey")

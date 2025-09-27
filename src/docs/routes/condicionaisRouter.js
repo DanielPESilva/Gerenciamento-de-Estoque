@@ -907,5 +907,539 @@ export default {
         }
       }
     }
+  },
+  "/condicionais/relatorios/ativos": {
+    "get": {
+      "tags": ["Condicionais"],
+      "summary": "Relatório de condicionais ativos",
+      "description": "Gera relatório detalhado de condicionais que ainda não foram devolvidos, incluindo estatísticas e alertas de vencimento",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "cliente_id",
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Filtrar por ID do cliente específico",
+          "example": 1
+        },
+        {
+          "in": "query",
+          "name": "data_inicio",
+          "schema": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": "Data inicial para filtro de criação (YYYY-MM-DD)",
+          "example": "2024-01-01"
+        },
+        {
+          "in": "query",
+          "name": "data_fim",
+          "schema": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": "Data final para filtro de criação (YYYY-MM-DD)", 
+          "example": "2024-12-31"
+        },
+        {
+          "in": "query",
+          "name": "vencidos",
+          "schema": {
+            "type": "boolean"
+          },
+          "description": "Filtrar apenas condicionais vencidos (data_devolucao < hoje)",
+          "example": false
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Relatório de condicionais ativos gerado com sucesso",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "message": {
+                    "type": "string",
+                    "example": "Relatório de condicionais ativos obtido com sucesso"
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "resumo": {
+                        "type": "object",
+                        "properties": {
+                          "total_ativos": {
+                            "type": "integer",
+                            "example": 15,
+                            "description": "Total de condicionais ativos"
+                          },
+                          "total_itens": {
+                            "type": "integer",
+                            "example": 45,
+                            "description": "Total de itens em condicionais ativos"
+                          },
+                          "valor_total": {
+                            "type": "number",
+                            "format": "float",
+                            "example": 2750.50,
+                            "description": "Valor total dos itens em condicionais ativos"
+                          },
+                          "vencidos": {
+                            "type": "integer",
+                            "example": 3,
+                            "description": "Quantidade de condicionais vencidos"
+                          },
+                          "a_vencer_em_7_dias": {
+                            "type": "integer",
+                            "example": 5,
+                            "description": "Condicionais que vencem nos próximos 7 dias"
+                          }
+                        }
+                      },
+                      "condicionais": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "example": 1
+                            },
+                            "cliente": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "integer",
+                                  "example": 1
+                                },
+                                "nome": {
+                                  "type": "string",
+                                  "example": "Maria Silva"
+                                },
+                                "email": {
+                                  "type": "string",
+                                  "example": "maria@email.com"
+                                },
+                                "telefone": {
+                                  "type": "string",
+                                  "example": "(11) 99999-9999"
+                                }
+                              }
+                            },
+                            "data_criacao": {
+                              "type": "string",
+                              "format": "date-time",
+                              "example": "2024-09-15T10:30:00.000Z"
+                            },
+                            "data_devolucao": {
+                              "type": "string",
+                              "format": "date-time",
+                              "example": "2024-10-15T23:59:59.000Z"
+                            },
+                            "dias_restantes": {
+                              "type": "integer",
+                              "example": 5,
+                              "description": "Dias restantes até vencimento (negativo se vencido)"
+                            },
+                            "status": {
+                              "type": "string",
+                              "enum": ["ativo", "vencido"],
+                              "example": "ativo"
+                            },
+                            "itens": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                  },
+                                  "quantidade": {
+                                    "type": "integer",
+                                    "example": 2
+                                  },
+                                  "roupa": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "integer",
+                                        "example": 5
+                                      },
+                                      "nome": {
+                                        "type": "string",
+                                        "example": "Vestido Floral"
+                                      },
+                                      "tipo": {
+                                        "type": "string",
+                                        "example": "vestido"
+                                      },
+                                      "tamanho": {
+                                        "type": "string",
+                                        "example": "M"
+                                      },
+                                      "cor": {
+                                        "type": "string",
+                                        "example": "azul"
+                                      },
+                                      "preco": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 89.90
+                                      },
+                                      "valor_total": {
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 179.80,
+                                        "description": "quantidade * preco"
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            },
+                            "valor_total": {
+                              "type": "number",
+                              "format": "float",
+                              "example": 179.80,
+                              "description": "Valor total do condicional"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "500": {
+          "$ref": "#/components/responses/InternalServerError"
+        }
+      }
+    }
+  },
+  "/condicionais/relatorios/devolvidos": {
+    "get": {
+      "tags": ["Condicionais"],
+      "summary": "Relatório de condicionais devolvidos",
+      "description": "Gera relatório detalhado de condicionais que já foram devolvidos, com estatísticas de itens e valores",
+      "parameters": [
+        {
+          "in": "query",
+          "name": "cliente_id",
+          "schema": {
+            "type": "integer"
+          },
+          "description": "Filtrar por ID do cliente específico",
+          "example": 1
+        },
+        {
+          "in": "query",
+          "name": "data_inicio",
+          "schema": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": "Data inicial para filtro de criação (YYYY-MM-DD)",
+          "example": "2024-01-01"
+        },
+        {
+          "in": "query",
+          "name": "data_fim",
+          "schema": {
+            "type": "string",
+            "format": "date"
+          },
+          "description": "Data final para filtro de criação (YYYY-MM-DD)",
+          "example": "2024-12-31"
+        }
+      ],
+      "responses": {
+        "200": {
+          "description": "Relatório de condicionais devolvidos gerado com sucesso",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "message": {
+                    "type": "string",
+                    "example": "Relatório de condicionais devolvidos obtido com sucesso"
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "resumo": {
+                        "type": "object",
+                        "properties": {
+                          "total_devolvidos": {
+                            "type": "integer",
+                            "example": 12,
+                            "description": "Total de condicionais devolvidos"
+                          },
+                          "total_itens_devolvidos": {
+                            "type": "integer",
+                            "example": 35,
+                            "description": "Total de itens devolvidos"
+                          },
+                          "valor_total_devolvido": {
+                            "type": "number",
+                            "format": "float",
+                            "example": 1820.40,
+                            "description": "Valor total dos itens devolvidos"
+                          }
+                        }
+                      },
+                      "condicionais": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "example": 2
+                            },
+                            "cliente": {
+                              "$ref": "#/components/schemas/ClienteInfo"
+                            },
+                            "data_criacao": {
+                              "type": "string",
+                              "format": "date-time",
+                              "example": "2024-08-15T10:30:00.000Z"
+                            },
+                            "data_devolucao": {
+                              "type": "string",
+                              "format": "date-time",
+                              "example": "2024-09-15T23:59:59.000Z",
+                              "description": "Data prevista para devolução"
+                            },
+                            "data_efetiva_devolucao": {
+                              "type": "string",
+                              "format": "date-time",
+                              "example": "2024-09-10T14:25:00.000Z",
+                              "description": "Data efetiva da devolução"
+                            },
+                            "itens": {
+                              "type": "array",
+                              "items": {
+                                "$ref": "#/components/schemas/CondicionalItemDetalhado"
+                              }
+                            },
+                            "valor_total": {
+                              "type": "number",
+                              "format": "float",
+                              "example": 150.00
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "500": {
+          "$ref": "#/components/responses/InternalServerError"
+        }
+      }
+    }
+  },
+  "/condicionais/itens/status": {
+    "patch": {
+      "tags": ["Condicionais"],
+      "summary": "Atualizar status de itens",
+      "description": "Atualiza o status de múltiplos itens (roupas) para disponível, em_condicional ou vendido. Registra histórico das alterações.",
+      "requestBody": {
+        "required": true,
+        "content": {
+          "application/json": {
+            "schema": {
+              "type": "object",
+              "required": ["roupas_ids", "novo_status"],
+              "properties": {
+                "roupas_ids": {
+                  "type": "array",
+                  "items": {
+                    "type": "integer"
+                  },
+                  "description": "Array com IDs das roupas a serem atualizadas",
+                  "example": [1, 2, 3]
+                },
+                "novo_status": {
+                  "type": "string",
+                  "enum": ["disponivel", "em_condicional", "vendido"],
+                  "description": "Novo status para os itens",
+                  "example": "em_condicional"
+                }
+              }
+            },
+            "examples": {
+              "marcar_em_condicional": {
+                "summary": "Marcar itens como em condicional",
+                "value": {
+                  "roupas_ids": [1, 2, 3],
+                  "novo_status": "em_condicional"
+                }
+              },
+              "marcar_disponivel": {
+                "summary": "Marcar itens como disponível",
+                "value": {
+                  "roupas_ids": [4, 5],
+                  "novo_status": "disponivel"
+                }
+              },
+              "marcar_vendido": {
+                "summary": "Marcar itens como vendido",
+                "value": {
+                  "roupas_ids": [6],
+                  "novo_status": "vendido"
+                }
+              }
+            }
+          }
+        }
+      },
+      "responses": {
+        "200": {
+          "description": "Status dos itens atualizado com sucesso",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "success": {
+                    "type": "boolean",
+                    "example": true
+                  },
+                  "message": {
+                    "type": "string",
+                    "example": "Status de 3 item(ns) atualizado(s) com sucesso"
+                  },
+                  "data": {
+                    "type": "object",
+                    "properties": {
+                      "itens_atualizados": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "integer",
+                              "example": 1
+                            },
+                            "nome": {
+                              "type": "string",
+                              "example": "Vestido Floral"
+                            },
+                            "status_anterior": {
+                              "type": "string",
+                              "example": "disponivel"
+                            },
+                            "status_novo": {
+                              "type": "string",
+                              "example": "em_condicional"
+                            }
+                          }
+                        }
+                      },
+                      "novo_status": {
+                        "type": "string",
+                        "example": "em_condicional"
+                      }
+                    }
+                  }
+                }
+              },
+              "examples": {
+                "sucesso_atualizacao": {
+                  "summary": "Atualização bem-sucedida",
+                  "value": {
+                    "success": true,
+                    "message": "Status de 3 item(ns) atualizado(s) com sucesso",
+                    "data": {
+                      "itens_atualizados": [
+                        {
+                          "id": 1,
+                          "nome": "Vestido Floral",
+                          "status_anterior": "disponivel",
+                          "status_novo": "em_condicional"
+                        },
+                        {
+                          "id": 2,
+                          "nome": "Blusa Rosa",
+                          "status_anterior": "disponivel",
+                          "status_novo": "em_condicional"
+                        },
+                        {
+                          "id": 3,
+                          "nome": "Calça Jeans",
+                          "status_anterior": "disponivel",
+                          "status_novo": "em_condicional"
+                        }
+                      ],
+                      "novo_status": "em_condicional"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "400": {
+          "description": "Dados inválidos",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ErrorResponse"
+              },
+              "examples": {
+                "status_invalido": {
+                  "summary": "Status inválido",
+                  "value": {
+                    "success": false,
+                    "message": "Status inválido. Valores permitidos: disponivel, em_condicional, vendido",
+                    "code": "INVALID_STATUS"
+                  }
+                },
+                "array_vazio": {
+                  "summary": "Array de IDs vazio",
+                  "value": {
+                    "success": false,
+                    "message": "roupas_ids deve ser um array não vazio",
+                    "code": "INVALID_ROUPAS_IDS"
+                  }
+                },
+                "status_obrigatorio": {
+                  "summary": "Status obrigatório",
+                  "value": {
+                    "success": false,
+                    "message": "novo_status é obrigatório",
+                    "code": "MISSING_STATUS"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "500": {
+          "$ref": "#/components/responses/InternalServerError"
+        }
+      }
+    }
   }
 };

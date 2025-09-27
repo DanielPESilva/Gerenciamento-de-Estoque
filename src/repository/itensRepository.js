@@ -168,8 +168,7 @@ class ItensRepository {
         return await prisma.roupas.findMany({
             where: {
                 nome: {
-                    contains: searchTerm,
-                    mode: 'insensitive'
+                    contains: searchTerm
                 }
             },
             select: {

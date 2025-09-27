@@ -504,8 +504,12 @@ export default {
         }
       ],
       "responses": {
+        "204": {
+          "description": "Cliente removido com sucesso (sem conteúdo retornado)",
+          "content": {}
+        },
         "200": {
-          "description": "Cliente removido com sucesso",
+          "description": "Cliente removido com sucesso (resposta com dados)",
           "content": {
             "application/json": {
               "schema": {

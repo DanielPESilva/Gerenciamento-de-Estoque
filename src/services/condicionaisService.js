@@ -662,6 +662,135 @@ class CondicionaisService {
             };
         }
     }
+
+    // Relatório de condicionais ativos
+    static async obterRelatorioAtivos(filtros = {}) {
+        try {
+            const resultado = await CondicionaisRepository.relatorioCondicionaisAtivos(filtros);
+            
+            return {
+                success: true,
+                message: 'Relatório de condicionais ativos obtido com sucesso',
+                data: {
+                    resumo: resultado.estatisticas,
+                    condicionais: resultado.condicionais.map(condicional => ({
+                        id: condicional.id,
+                        cliente: {
+                            id: condicional.Cliente.id,
+                            nome: condicional.Cliente.nome,
+                            email: condicional.Cliente.email,
+                            telefone: condicional.Cliente.telefone
+                        },
+                        data_criacao: condicional.data,
+                        data_devolucao: condicional.data_devolucao,
+                        dias_restantes: Math.ceil((new Date(condicional.data_devolucao) - new Date()) / (1000 * 60 * 60 * 24)),
+                        status: new Date(condicional.data_devolucao) < new Date() ? 'vencido' : 'ativo',
+                        itens: condicional.CondicionaisItens.map(item => ({
+                            id: item.id,
+                            quantidade: item.quatidade,
+                            roupa: {
+                                id: item.Roupa.id,
+                                nome: item.Roupa.nome,
+                                tipo: item.Roupa.tipo,
+                                tamanho: item.Roupa.tamanho,
+                                cor: item.Roupa.cor,
+                                preco: item.Roupa.preco,
+                                valor_total: item.quatidade * item.Roupa.preco
+                            }
+                        })),
+                        valor_total: condicional.CondicionaisItens.reduce((acc, item) => 
+                            acc + (item.quatidade * item.Roupa.preco), 0)
+                    }))
+                }
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: `Erro ao obter relatório de condicionais ativos: ${error.message}`,
+                code: 'REPORT_ERROR'
+            };
+        }
+    }
+
+    // Relatório de condicionais devolvidos
+    static async obterRelatorioDevolvidos(filtros = {}) {
+        try {
+            const resultado = await CondicionaisRepository.relatorioCondicionaisDevolvidos(filtros);
+            
+            return {
+                success: true,
+                message: 'Relatório de condicionais devolvidos obtido com sucesso',
+                data: {
+                    resumo: resultado.estatisticas,
+                    condicionais: resultado.condicionais.map(condicional => ({
+                        id: condicional.id,
+                        cliente: {
+                            id: condicional.Cliente.id,
+                            nome: condicional.Cliente.nome,
+                            email: condicional.Cliente.email,
+                            telefone: condicional.Cliente.telefone
+                        },
+                        data_criacao: condicional.data,
+                        data_devolucao: condicional.data_devolucao,
+                        data_efetiva_devolucao: condicional.devolvido ? condicional.data : null,
+                        itens: condicional.CondicionaisItens.map(item => ({
+                            id: item.id,
+                            quantidade: item.quatidade,
+                            roupa: {
+                                id: item.Roupa.id,
+                                nome: item.Roupa.nome,
+                                tipo: item.Roupa.tipo,
+                                tamanho: item.Roupa.tamanho,
+                                cor: item.Roupa.cor,
+                                preco: item.Roupa.preco,
+                                valor_total: item.quatidade * item.Roupa.preco
+                            }
+                        })),
+                        valor_total: condicional.CondicionaisItens.reduce((acc, item) => 
+                            acc + (item.quatidade * item.Roupa.preco), 0)
+                    }))
+                }
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: `Erro ao obter relatório de condicionais devolvidos: ${error.message}`,
+                code: 'REPORT_ERROR'
+            };
+        }
+    }
+
+    // Atualizar status de itens
+    static async atualizarStatusItens(roupasIds, novoStatus) {
+        try {
+            const statusValidos = ['disponivel', 'em_condicional', 'vendido'];
+            
+            if (!statusValidos.includes(novoStatus)) {
+                return {
+                    success: false,
+                    message: `Status inválido. Valores permitidos: ${statusValidos.join(', ')}`,
+                    code: 'INVALID_STATUS'
+                };
+            }
+
+            const resultado = await CondicionaisRepository.atualizarStatusItens(roupasIds, novoStatus);
+            
+            return {
+                success: true,
+                message: `Status de ${resultado.length} item(ns) atualizado(s) com sucesso`,
+                data: {
+                    itens_atualizados: resultado,
+                    novo_status: novoStatus
+                }
+            };
+        } catch (error) {
+            return {
+                success: false,
+                message: `Erro ao atualizar status dos itens: ${error.message}`,
+                code: 'STATUS_UPDATE_ERROR'
+            };
+        }
+    }
 }
 
 export default CondicionaisService;
