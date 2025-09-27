@@ -79,9 +79,9 @@ class ClientesRepository {
                 Condicionais: {
                     select: {
                         id: true,
-                        data_condicional: true,
-                        descricao: true,
-                        valor: true
+                        data: true,
+                        data_devolucao: true,
+                        devolvido: true
                     }
                 }
             }
