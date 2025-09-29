@@ -50,8 +50,7 @@ class ImagensService {
 
                 imagensSalvas.push({
                     url: `${itemId}/${uniqueName}`,
-                    item_id: itemId,
-                    descricao: dadosValidados.descricao
+                    item_id: itemId
                 });
             });
         };
@@ -66,7 +65,6 @@ class ImagensService {
                 const [itemId, filename] = img.url.split('/');
                 return {
                     url: `/api/imagens/${itemId}/${filename}`,
-                    descricao: img.descricao,
                     item_id: img.item_id
                 };
             })

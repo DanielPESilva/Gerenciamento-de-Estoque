@@ -36,22 +36,24 @@ class ImagensController {
 
   static inserir = async (req, res) => {
     try {
-      const { imagens } = req.files;
 
-      if (!imagens || imagens.length === 0) {
+      
+      const { images } = req.files;
+
+      if (!images || images.length === 0) {
         return sendError(res, 400, ['Nenhuma imagem enviada.']);
       }
 
       const parametros = {
-        item_id: req.body.item_id,
-        descricao: req.body.descricao || null
+        item_id: req.body.item_id
       };
 
-      const imagensSalvas = await ImagensService.create(parametros, imagens);
+      const imagensSalvas = await ImagensService.create(parametros, images);
 
       return sendResponse(res, 201, { data: imagensSalvas });
 
     } catch (err) {
+
       if (err instanceof ZodError) {
         const errors = err.issues.map(issue => ({
           path: issue.path.join('.'),

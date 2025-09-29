@@ -6,6 +6,7 @@ import vendasSchema from './schemas/vendasSchema.js';
 import condicionaisSchema from './schemas/CondicionaisSchema.js';
 import comprasSchema from './schemas/comprasSchema.js';
 import clientesSchema from './schemas/clientesSchema.js';
+import imagensSchema from './schemas/imagensSchema.js';
 import { baixaPaths, baixaSchemas } from './baixa.js';
 import itensRouter from './routes/itensRouter.js';
 import usuariosRouter from './routes/usuariosRouter.js';
@@ -13,6 +14,7 @@ import clientesRouter from './routes/clientesRouter.js';
 import vendasRouter from './routes/vendasRouter.js';
 import condicionaisRouter from './routes/condicionaisRouter.js';
 import comprasRouter from './routes/comprasRouter.js';
+import imagensRouter from './routes/imagensRouter.js';
 
 const swaggerDocument = {
   ...swaggerHead,
@@ -23,6 +25,7 @@ const swaggerDocument = {
     ...vendasRouter,
     ...condicionaisRouter,
     ...comprasRouter,
+    ...imagensRouter,
     ...baixaPaths
   },
   components: {
@@ -295,6 +298,14 @@ const swaggerDocument = {
       CompraAtualizarItem: comprasSchema.CompraAtualizarItem,
       CompraRelatorio: comprasSchema.CompraRelatorio,
       CompraFinalizacaoResposta: comprasSchema.CompraFinalizacaoResposta,
+      
+      // Schemas de Imagens
+      Imagem: imagensSchema.Imagem,
+      CreateImagemRequest: imagensSchema.CreateImagemRequest,
+      ImagemUploadResponse: imagensSchema.ImagemUploadResponse,
+      ImagemListResponse: imagensSchema.ImagemListResponse,
+      ImagemDeleteResponse: imagensSchema.ImagemDeleteResponse,
+      ImagemErrorResponse: imagensSchema.ImagemErrorResponse,
       
       // Schemas de Baixa
       ...baixaSchemas,

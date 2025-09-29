@@ -10,8 +10,7 @@ class ImagensSchema {
     });
 
     static createSchema = z.object({
-        item_id: z.coerce.number().int().positive("ID do item deve ser um número positivo"),
-        descricao: z.string().optional()
+        item_id: z.coerce.number().int().positive("ID do item deve ser um número positivo")
     });
 }
 

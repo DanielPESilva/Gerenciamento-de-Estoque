@@ -123,7 +123,6 @@ model Imagens {
   id        Int      @id @default(autoincrement())
   item_id   Int
   url       String
-  descricao String?
   criado_em DateTime @default(now())
   Roupa     Roupas   @relation(fields: [item_id], references: [id], onDelete: Cascade)
 

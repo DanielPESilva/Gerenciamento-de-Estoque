@@ -32,7 +32,7 @@ const upload = multer({
     files: 5 // Máximo 5 arquivos por vez
   },
 }).fields([
-  { name: 'imagens', maxCount: 5 }
+  { name: 'images', maxCount: 5 }
 ]);
 
 // Middleware para tratar erros do multer

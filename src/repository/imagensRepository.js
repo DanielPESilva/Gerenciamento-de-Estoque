@@ -10,7 +10,6 @@ class ImagensRepository {
             select: {
                 id: true,
                 url: true,
-                descricao: true,
                 item_id: true,
                 criado_em: true
             }
@@ -25,7 +24,6 @@ class ImagensRepository {
             select: {
                 id: true,
                 url: true,
-                descricao: true,
                 item_id: true
             }
         });
@@ -37,7 +35,6 @@ class ImagensRepository {
             select: {
                 id: true,
                 url: true,
-                descricao: true,
                 item_id: true,
                 criado_em: true
             }

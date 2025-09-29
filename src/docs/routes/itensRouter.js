@@ -91,7 +91,7 @@ const itensRouter = {
                   cor: 'Branco',
                   preco: 35.99,
                   quantidade: 10,
-                  usuarios_id: 1
+                  usuarios_id: 7
                 }
               },
               calca: {
@@ -103,7 +103,7 @@ const itensRouter = {
                   cor: 'Azul',
                   preco: 89.90,
                   quantidade: 5,
-                  usuarios_id: 1
+                  usuarios_id: 8
                 }
               }
             }
