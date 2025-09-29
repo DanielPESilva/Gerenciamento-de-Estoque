@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
+import path from "path";
 import swaggerUi from "swagger-ui-express";
 import swaggerDocument from "./docs/index.js";
 
@@ -11,6 +12,7 @@ import vendasRouter from "./routes/vendas.js";
 import condicionaisRouter from "./routes/condicionais.js";
 import comprasRouter from "./routes/compras.js";
 import baixaRouter from "./routes/baixa.js";
+import imagensRouter from "./routes/imagens.js";
 
 dotenv.config();
 
@@ -33,6 +35,7 @@ app.use("/api/vendas", vendasRouter);
 app.use("/api/condicionais", condicionaisRouter);
 app.use("/api/compras", comprasRouter);
 app.use("/api/baixa", baixaRouter);
+app.use("/api", imagensRouter);
 
 // Rota de health check
 app.get("/health", (req, res) => {
@@ -41,6 +44,11 @@ app.get("/health", (req, res) => {
         message: "API funcionando corretamente",
         timestamp: new Date().toISOString()
     });
+});
+
+// Rota para documentação das imagens
+app.get("/docs/imagens", (req, res) => {
+    res.sendFile(path.join(process.cwd(), "documentacao_imagens.html"));
 });
 
 // Redirecionamento da raiz para documentação
