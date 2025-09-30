@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import BaixaController from '../controller/baixaController.js';
+import BaixaController from '../controllers/baixaController.js';
 
 const router = Router();
 

@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import CondicionaisController from '../controller/condicionaisController.js';
+import CondicionaisController from '../controllers/condicionaisController.js';
 
 const router = Router();
 
