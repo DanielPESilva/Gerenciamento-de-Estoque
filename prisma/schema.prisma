@@ -111,12 +111,14 @@ model Roupas {
 }
 
 model Usuarios {
-  id        Int      @id @default(autoincrement())
-  nome      String
-  email     String   @unique
-  senha     String
-  criado_em DateTime @default(now())
-  Roupas    Roupas[]
+  id                 Int       @id @default(autoincrement())
+  nome               String
+  email              String    @unique
+  senha              String
+  criado_em          DateTime  @default(now())
+  reset_code         String?
+  reset_code_expires DateTime?
+  Roupas             Roupas[]
 }
 
 model Imagens {

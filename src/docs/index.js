@@ -7,6 +7,8 @@ import condicionaisSchema from './schemas/CondicionaisSchema.js';
 import comprasSchema from './schemas/comprasSchema.js';
 import clientesSchema from './schemas/clientesSchema.js';
 import imagensSchema from './schemas/imagensSchema.js';
+import authSchemas from './schemas/authSchema.js';
+import emailSchemas from './schemas/emailSchema.js';
 import { baixaPaths, baixaSchemas } from './baixa.js';
 import itensRouter from './routes/itensRouter.js';
 import usuariosRouter from './routes/usuariosRouter.js';
@@ -15,10 +17,14 @@ import vendasRouter from './routes/vendasRouter.js';
 import condicionaisRouter from './routes/condicionaisRouter.js';
 import comprasRouter from './routes/comprasRouter.js';
 import imagensRouter from './routes/imagensRouter.js';
+import authRouter from './routes/authRouter.js';
+import emailRouter from './routes/emailRouter.js';
 
 const swaggerDocument = {
   ...swaggerHead,
   paths: {
+    ...authRouter,
+    ...emailRouter,
     ...itensRouter,
     ...usuariosRouter,
     ...clientesRouter,
@@ -29,7 +35,30 @@ const swaggerDocument = {
     ...baixaPaths
   },
   components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'JWT Authorization header usando Bearer scheme. Digite "Bearer {seu-token}" no campo abaixo.'
+      }
+    },
     schemas: {
+      // Schemas de Autenticação
+      AuthRegisterRequest: authSchemas.AuthRegisterRequest,
+      AuthLoginRequest: authSchemas.AuthLoginRequest,
+      AuthResponse: authSchemas.AuthResponse,
+      ForgotPasswordRequest: authSchemas.ForgotPasswordRequest,
+      ResetPasswordRequest: authSchemas.ResetPasswordRequest,
+      RefreshTokenRequest: authSchemas.RefreshTokenRequest,
+      TokenResponse: authSchemas.TokenResponse,
+      MessageResponse: authSchemas.MessageResponse,
+      
+      // Schemas de Email
+      SimpleEmailRequest: emailSchemas.SimpleEmailRequest,
+      SaleNotificationRequest: emailSchemas.SaleNotificationRequest,
+      EmailResponse: emailSchemas.EmailResponse,
+      
       // Schemas de Itens
       Item: itensSchema.Item,
       CreateItemRequest: itensSchema.CreateItemRequest,
