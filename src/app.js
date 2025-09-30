@@ -13,6 +13,8 @@ import condicionaisRouter from "./routes/condicionais.js";
 import comprasRouter from "./routes/compras.js";
 import baixaRouter from "./routes/baixa.js";
 import imagensRouter from "./routes/imagens.js";
+import emailRouter from "./routes/emailRoutes.js";
+import authRouter from "./routes/authRoutes.js";
 
 dotenv.config();
 
@@ -28,6 +30,7 @@ app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, {
 }));
 
 // Rotas da API
+app.use("/api/auth", authRouter);
 app.use("/api/clientes", clientesRouter);
 app.use("/api/itens", itensRouter);
 app.use("/api/usuarios", usuariosRouter);
@@ -36,6 +39,7 @@ app.use("/api/condicionais", condicionaisRouter);
 app.use("/api/compras", comprasRouter);
 app.use("/api/baixa", baixaRouter);
 app.use("/api", imagensRouter);
+app.use("/api/email", emailRouter);
 
 // Rota de health check
 app.get("/health", (req, res) => {

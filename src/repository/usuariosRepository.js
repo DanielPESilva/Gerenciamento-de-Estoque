@@ -108,6 +108,19 @@ class UsuariosRepository {
             }
         });
     }
+
+    // Métodos para autenticação (incluem senha)
+    static async getByEmail(email) {
+        return await prisma.usuarios.findUnique({
+            where: { email }
+        });
+    }
+
+    static async getById(id) {
+        return await prisma.usuarios.findUnique({
+            where: { id: Number(id) }
+        });
+    }
 }
 
 export default UsuariosRepository;

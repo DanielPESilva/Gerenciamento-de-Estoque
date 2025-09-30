@@ -16,7 +16,14 @@ const swaggerHead = {
       - 📦 **Controle de Estoque** - Subtração automática e gerenciamento manual
       
       ## Autenticação
-      Esta API não requer autenticação no momento.
+      Esta API utiliza autenticação JWT Bearer Token para rotas protegidas.
+      
+      ### Como usar:
+      1. 📝 Registre-se ou faça login em \`/auth/register\` ou \`/auth/login\`
+      2. 🔑 Copie o \`accessToken\` da resposta
+      3. 🔒 Use o botão "Authorize" no topo desta página
+      4. ✨ Digite \`Bearer {seu-token}\` no campo de autorização
+      5. 🧪 Teste as rotas de email protegidas!
       
       ## Formatos de Resposta
       Todas as respostas seguem o padrão:
@@ -38,7 +45,25 @@ const swaggerHead = {
       description: 'Servidor de Produção',
     },
   ],
+  components: {
+    securitySchemes: {
+      bearerAuth: {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'JWT Authorization header usando Bearer scheme. Digite "Bearer {seu-token}" no campo abaixo.'
+      }
+    }
+  },
   tags: [
+    {
+      name: 'Autenticação',
+      description: 'Operações de registro, login e gerenciamento de tokens JWT'
+    },
+    {
+      name: 'Email',
+      description: 'Operações de envio de emails (requer autenticação JWT)'
+    },
     {
       name: 'Itens',
       description: 'Operações relacionadas ao gerenciamento de itens/roupas'
