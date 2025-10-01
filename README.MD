@@ -1,41 +1,69 @@
-# Gerenciamento de Estoque - Instruções Iniciais
+# 🛍️ DressFy - Sistema de Gerenciamento de Estoque
 
-## 1. Instale as dependências
+API completa com autenticação JWT, envio de emails e documentação Swagger.
+
+## 🚀 Instalação RÁPIDA - Docker (Recomendado)
 
 ```bash
+git clone https://github.com/DanielPESilva/Gerenciamento-de-Estoque.git
+cd Gerenciamento-de-Estoque
+./start-docker.sh
+```
+**Pronto!** API em: http://localhost:3000
+
+## 💻 Instalação Manual
+
+**Pré-requisitos:** Node.js 18+, MySQL
+
+```bash
+git clone [repositório]
+cd Gerenciamento-de-Estoque
+cp .env.example .env
+# Edite .env com suas credenciais MySQL
 npm install
+npx prisma db push
+npm run dev
 ```
 
-## 2. Configure o banco de dados
+## 🌐 Acessos
 
-Crie um arquivo `.env` na raiz do projeto com o conteúdo:
+- **API**: http://localhost:3000
+- **Documentação**: http://localhost:3000/api-docs
+- **Health Check**: http://localhost:3000/health
 
+## � Configurações (.env)
+
+```env
+# Ajuste conforme seu MySQL
+DATABASE_URL="mysql://usuario:senha@localhost:3306/dressfy_db"
+
+# Exemplos:
+# XAMPP: "mysql://root:@localhost:3306/dressfy_db"
+# Docker: "mysql://dressfy_user:dressfy_pass@localhost:3306/dressfy_db"
 ```
-DATABASE_URL="mysql://dressfy_user:dressfy_pw@localhost:5002/dressfy_db"
-```
 
-Ajuste o usuário, senha, host e porta conforme seu ambiente/Docker.
-
-## 3. Gere o client do Prisma e rode as migrations
+## � Scripts
 
 ```bash
-npx prisma generate
-npx prisma migrate dev --name init
+npm run dev    # Desenvolvimento
+npm start      # Produção
 ```
 
-Se quiser popular o banco com dados iniciais, use o SQL fornecido pelo professor.
+## 🚨 Problemas?
 
-## 4. Rode o servidor
+- **Banco**: Verifique se MySQL está rodando e credenciais no `.env`
+- **Porta**: Mude `PORT=8000` no `.env` se 3000 estiver ocupada
+- **Dependências**: `npm install`
 
-```bash
-npm start
-```
+---
 
-Acesse: http://localhost:3000/clientes
+## 🎯 Recursos Principais
 
-## 5. Estrutura de exemplo pronta
-- CRUD de clientes já implementado.
-- Siga o padrão para criar rotas para as outras tabelas.
+✅ **CRUD completo** - Clientes, Itens, Vendas, etc.  
+✅ **Autenticação JWT** - Login/Register seguro  
+✅ **Envio de Email** - Notificações automáticas  
+✅ **Documentação Swagger** - Interface interativa  
+✅ **Dockerizado** - Funciona em qualquer máquina  
 
-*Projeto de gerenciamento de estoque "dressfy" para ajudar no controle do estoque de lojas de roupas.*
+**Desenvolvido para controle de estoque de lojas de roupas**
 
