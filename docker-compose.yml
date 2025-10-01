@@ -1,0 +1,72 @@
+# ========================================
+# DressFy - Docker Compose OTIMIZADO
+# ========================================
+
+version: '3.8'
+
+services:
+  # Banco de dados MySQL
+  database:
+    image: mysql:8.0
+    container_name: dressfy_mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: dressfy_root
+      MYSQL_DATABASE: dressfy_db
+      MYSQL_USER: dressfy_user
+      MYSQL_PASSWORD: dressfy_pass
+      MYSQL_ALLOW_EMPTY_PASSWORD: 'no'
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - dressfy_network
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      timeout: 20s
+      retries: 10
+      interval: 10s
+    command: >
+      --default-authentication-plugin=mysql_native_password
+      --skip-host-cache
+      --skip-name-resolve
+
+  # Aplicação DressFy
+  app:
+    build: 
+      context: .
+      dockerfile: Dockerfile
+    container_name: dressfy_app
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: "mysql://dressfy_user:dressfy_pass@database:3306/dressfy_db"
+      JWT_SECRET: "super-secret-jwt-key-dressfy-2024-very-secure-32-characters-minimum"
+      JWT_EXPIRES_IN: "1h"
+      EMAIL_USER: "dressfy02@gmail.com"
+      EMAIL_PASS: "rqjj gqhr janb jkgf"
+      HOST: "dressfy02@gmail.com"
+      PASS: "rqjj gqhr janb jkgf"
+      NODE_ENV: "production"
+    ports:
+      - "3000:3000"
+    depends_on:
+      database:
+        condition: service_healthy
+    networks:
+      - dressfy_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 40s
+
+volumes:
+  mysql_data:
+    driver: local
+
+networks:
+  dressfy_network:
+    driver: bridge
