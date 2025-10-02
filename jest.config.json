@@ -1,0 +1,32 @@
+{
+  "testEnvironment": "node",
+  "transform": {
+    "^.+\\.js$": "babel-jest"
+  },
+  "transformIgnorePatterns": [
+    "node_modules/(?!(uuid|nanoid)/)"
+  ],
+  "testMatch": [
+    "**/src/test/unidade/*.spec.js",
+    "**/src/test/integracao/*.spec.js",
+    "**/src/test/**/*.test.js"
+  ],
+  "collectCoverageFrom": [
+    "src/**/*.js",
+    "!src/test/**/*.js",
+    "!src/docs/**/*.js",
+    "!src/seeds/**/*.js"
+  ],
+  "coverageDirectory": "coverage",
+  "coverageReporters": [
+    "text",
+    "lcov",
+    "html"
+  ],
+  "moduleNameMapper": {
+    "^(\\.{1,2}/.*)\\.js$": "$1"
+  },
+  "testTimeout": 30000,
+  "verbose": true,
+  "setupFilesAfterEnv": ["<rootDir>/src/test/setup.js"]
+}
