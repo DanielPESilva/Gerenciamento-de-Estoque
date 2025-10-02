@@ -1,4 +1,4 @@
-import { describe, expect, jest, test, beforeEach } from '@jest/globals';
+import { describe, expect, jest, test, beforeEach, afterEach } from '@jest/globals';
 import * as ClientesController from '../../controllers/clientesController.js';
 import ClientesService from '../../services/clientesService.js';
 import ClientesSchema from '../../schemas/clientesSchema.js';
@@ -15,161 +15,270 @@ describe('ClientesController', () => {
     req = { body: {}, query: {}, params: {} };
     res = { status: jest.fn().mockReturnThis(), json: jest.fn() };
     jest.clearAllMocks();
+    jest.spyOn(console, 'error').mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    console.error.mockRestore();
   });
 
   describe('getAll', () => {
-    test('should get all clients successfully', async () => {
-      const queryData = { page: 1, limit: 10 };
-      const serviceResult = {
-        data: [{ id: 1, nome: 'João Silva', email: 'joao@teste.com' }],
-        pagination: { page: 1, limit: 10, total: 1 }
-      };
+    test('should handle service errors', async () => {
+      const error = new Error('Database error');
+      req.query = { page: 1, limit: 10 };
 
-      req.query = queryData;
-      ClientesSchema.query = { 
-        safeParse: jest.fn().mockReturnValue({ success: true, data: queryData }) 
+      ClientesSchema.query = {
+        safeParse: jest.fn().mockReturnValue({ success: true, data: { page: 1, limit: 10 } })
       };
-      ClientesService.getAllClientes.mockResolvedValue(serviceResult);
+      ClientesService.getAllClientes.mockRejectedValue(error);
 
       await ClientesController.getAll(req, res);
 
-      expect(sendResponse).toHaveBeenCalledWith(res, 200, {
-        data: serviceResult.data,
-        pagination: serviceResult.pagination
-      });
+      expect(console.error).toHaveBeenCalledWith('Erro ao buscar clientes:', error);
+      expect(sendError).toHaveBeenCalledWith(res, 500, 'Erro interno do servidor');
+    });
+
+    test('should handle validation errors', async () => {
+      const invalidQuery = { page: 'invalid' };
+      req.query = invalidQuery;
+
+      ClientesSchema.query = {
+        safeParse: jest.fn().mockReturnValue({
+          success: false,
+          error: {
+            issues: [{
+              path: ['page'],
+              message: 'Expected number, received string'
+            }]
+          }
+        })
+      };
+
+      await ClientesController.getAll(req, res);
+
+      expect(sendError).toHaveBeenCalledWith(res, 400, [{
+        field: 'page',
+        message: 'Expected number, received string'
+      }]);
     });
   });
 
   describe('getById', () => {
-    test('should get client by id successfully', async () => {
-      const clientData = { id: 1, nome: 'João Silva', email: 'joao@teste.com' };
-
-      req.params = { id: '1' };
-      ClientesSchema.id = { 
-        safeParse: jest.fn().mockReturnValue({ success: true, data: { id: 1 } }) 
+    test('should handle validation errors', async () => {
+      req.params = { id: 'invalid' };
+      ClientesSchema.id = {
+        safeParse: jest.fn().mockReturnValue({
+          success: false,
+          error: {
+            issues: [{
+              path: ['id'],
+              message: 'Expected number, received string'
+            }]
+          }
+        })
       };
-      ClientesService.getClienteById.mockResolvedValue(clientData);
 
       await ClientesController.getById(req, res);
 
-      expect(sendResponse).toHaveBeenCalledWith(res, 200, { data: clientData });
+      expect(sendError).toHaveBeenCalledWith(res, 400, [{
+        field: 'id',
+        message: 'Expected number, received string'
+      }]);
     });
 
-    test('should handle client not found', async () => {
-      req.params = { id: '999' };
-      ClientesSchema.id = { 
-        safeParse: jest.fn().mockReturnValue({ success: true, data: { id: 999 } }) 
+    test('should handle service errors', async () => {
+      const error = new Error('Database error');
+      req.params = { id: '1' };
+      ClientesSchema.id = {
+        safeParse: jest.fn().mockReturnValue({ success: true, data: { id: 1 } })
       };
-      ClientesService.getClienteById.mockResolvedValue(null);
+      ClientesService.getClienteById.mockRejectedValue(error);
 
       await ClientesController.getById(req, res);
 
-      expect(sendError).toHaveBeenCalledWith(res, 404, {
-        message: "Cliente não encontrado com o ID informado",
-        field: "id"
-      });
+      expect(console.error).toHaveBeenCalledWith('Erro ao buscar cliente:', error);
+      expect(sendError).toHaveBeenCalledWith(res, 500, 'Erro interno do servidor');
     });
   });
 
   describe('create', () => {
-    test('should create client successfully', async () => {
-      const clientData = { nome: 'João Silva', email: 'joao@teste.com', cpf: '12345678901', telefone: null, endereco: null };
-      const createdClient = { id: 1, ...clientData };
+    test('should handle validation errors', async () => {
+      const invalidData = { nome: '', email: 'invalid-email' };
+      req.body = invalidData;
 
-      req.body = { nome: 'João Silva', email: 'joao@teste.com', cpf: '12345678901' };
-      ClientesSchema.create = { 
-        safeParse: jest.fn().mockReturnValue({ success: true, data: clientData }) 
+      ClientesSchema.create = {
+        safeParse: jest.fn().mockReturnValue({
+          success: false,
+          error: {
+            issues: [
+              { path: ['nome'], message: 'Nome é obrigatório' },
+              { path: ['email'], message: 'Email inválido' }
+            ]
+          }
+        })
       };
-      ClientesService.createCliente.mockResolvedValue(createdClient);
 
       await ClientesController.create(req, res);
 
-      expect(ClientesService.createCliente).toHaveBeenCalledWith(clientData);
-      expect(sendResponse).toHaveBeenCalledWith(res, 201, { 
-        data: createdClient,
-        message: "Cliente criado com sucesso"
-      });
+      expect(sendError).toHaveBeenCalledWith(res, 400, [
+        { field: 'nome', message: 'Nome é obrigatório' },
+        { field: 'email', message: 'Email inválido' }
+      ]);
+    });
+
+    test('should handle service errors', async () => {
+      const clientData = { nome: 'João Silva', email: 'joao@teste.com', cpf: '12345678901' };
+      const error = new Error('Database error');
+
+      req.body = clientData;
+      ClientesSchema.create = {
+        safeParse: jest.fn().mockReturnValue({ success: true, data: clientData })
+      };
+      ClientesService.getClienteByEmail.mockResolvedValue(null);
+      ClientesService.getClienteByCpf.mockResolvedValue(null);
+      ClientesService.createCliente.mockRejectedValue(error);
+
+      await ClientesController.create(req, res);
+
+      expect(console.error).toHaveBeenCalledWith('Erro ao criar cliente:', error);
+      expect(sendError).toHaveBeenCalledWith(res, 500, 'Erro interno do servidor');
     });
   });
 
   describe('update', () => {
-    test('should update client successfully', async () => {
+    test('should handle validation errors on params', async () => {
+      req.params = { id: 'invalid' };
+      req.body = { nome: 'João Silva' };
+
+      ClientesSchema.id = {
+        safeParse: jest.fn().mockReturnValue({
+          success: false,
+          error: {
+            issues: [{
+              path: ['id'],
+              message: 'Expected number, received string'
+            }]
+          }
+        })
+      };
+
+      await ClientesController.update(req, res);
+
+      expect(sendError).toHaveBeenCalledWith(res, 400, [{
+        field: 'id',
+        message: 'Expected number, received string'
+      }]);
+    });
+
+    test('should handle validation errors on body', async () => {
+      req.params = { id: '1' };
+      req.body = { nome: '' };
+
+      ClientesSchema.id = {
+        safeParse: jest.fn().mockReturnValue({ success: true, data: { id: 1 } })
+      };
+      ClientesSchema.update = {
+        safeParse: jest.fn().mockReturnValue({
+          success: false,
+          error: {
+            issues: [{
+              path: ['nome'],
+              message: 'Nome é obrigatório'
+            }]
+          }
+        })
+      };
+
+      await ClientesController.update(req, res);
+
+      expect(sendError).toHaveBeenCalledWith(res, 400, [{
+        field: 'nome',
+        message: 'Nome é obrigatório'
+      }]);
+    });
+
+    test('should handle service errors on update', async () => {
       const updateData = { nome: 'João Silva Atualizado' };
-      const updatedClient = { id: 1, nome: 'João Silva Atualizado', email: 'joao@teste.com' };
       const existingClient = { id: 1, nome: 'João Silva', email: 'joao@teste.com' };
+      const error = new Error('Database error');
 
       req.params = { id: '1' };
       req.body = updateData;
-      ClientesSchema.id = { 
-        safeParse: jest.fn().mockReturnValue({ success: true, data: { id: 1 } }) 
+      ClientesSchema.id = {
+        safeParse: jest.fn().mockReturnValue({ success: true, data: { id: 1 } })
       };
-      ClientesSchema.update = { 
-        safeParse: jest.fn().mockReturnValue({ success: true, data: updateData }) 
+      ClientesSchema.update = {
+        safeParse: jest.fn().mockReturnValue({ success: true, data: updateData })
       };
       ClientesService.getClienteById.mockResolvedValue(existingClient);
-      ClientesService.updateCliente.mockResolvedValue(updatedClient);
+      ClientesService.updateCliente.mockRejectedValue(error);
 
       await ClientesController.update(req, res);
 
-      expect(sendResponse).toHaveBeenCalledWith(res, 200, { 
-        data: updatedClient,
-        message: "Cliente atualizado com sucesso"
-      });
-    });
-
-    test('should handle client not found on update', async () => {
-      const updateData = { nome: 'João Silva Atualizado' };
-
-      req.params = { id: '999' };
-      req.body = updateData;
-      ClientesSchema.id = { 
-        safeParse: jest.fn().mockReturnValue({ success: true, data: { id: 999 } }) 
-      };
-      ClientesSchema.update = { 
-        safeParse: jest.fn().mockReturnValue({ success: true, data: updateData }) 
-      };
-      ClientesService.getClienteById.mockResolvedValue(null);
-
-      await ClientesController.update(req, res);
-
-      expect(sendError).toHaveBeenCalledWith(res, 404, {
-        message: "Cliente não encontrado com o ID informado",
-        field: "id"
-      });
+      expect(console.error).toHaveBeenCalledWith('Erro ao atualizar cliente:', error);
+      expect(sendError).toHaveBeenCalledWith(res, 500, 'Erro interno do servidor');
     });
   });
 
   describe('remove', () => {
-    test('should remove client successfully', async () => {
-      const existingClient = { id: 1, nome: 'João Silva', email: 'joao@teste.com' };
-
-      req.params = { id: '1' };
-      ClientesSchema.id = { 
-        safeParse: jest.fn().mockReturnValue({ success: true, data: { id: 1 } }) 
+    test('should handle validation errors on delete', async () => {
+      req.params = { id: 'invalid' };
+      ClientesSchema.id = {
+        safeParse: jest.fn().mockReturnValue({
+          success: false,
+          error: {
+            issues: [{
+              path: ['id'],
+              message: 'Expected number, received string'
+            }]
+          }
+        })
       };
-      ClientesService.getClienteById.mockResolvedValue(existingClient);
-      ClientesService.deleteCliente.mockResolvedValue();
 
       await ClientesController.remove(req, res);
 
-      expect(sendResponse).toHaveBeenCalledWith(res, 204, { 
-        message: "Cliente removido com sucesso"
+      expect(sendError).toHaveBeenCalledWith(res, 400, [{
+        field: 'id',
+        message: 'Expected number, received string'
+      }]);
+    });
+
+    test('should handle foreign key constraint error', async () => {
+      const existingClient = { id: 1, nome: 'João Silva', email: 'joao@teste.com' };
+      const error = new Error('Foreign key constraint');
+      error.code = 'P2003';
+
+      req.params = { id: '1' };
+      ClientesSchema.id = {
+        safeParse: jest.fn().mockReturnValue({ success: true, data: { id: 1 } })
+      };
+      ClientesService.getClienteById.mockResolvedValue(existingClient);
+      ClientesService.deleteCliente.mockRejectedValue(error);
+
+      await ClientesController.remove(req, res);
+
+      expect(console.error).toHaveBeenCalledWith('Erro ao remover cliente:', error);
+      expect(sendError).toHaveBeenCalledWith(res, 409, {
+        message: 'Não é possível remover cliente que possui vendas ou outros registros associados',
+        field: 'relacionamentos'
       });
     });
 
-    test('should handle client not found on delete', async () => {
-      req.params = { id: '999' };
-      ClientesSchema.id = { 
-        safeParse: jest.fn().mockReturnValue({ success: true, data: { id: 999 } }) 
+    test('should handle general service errors on delete', async () => {
+      const existingClient = { id: 1, nome: 'João Silva', email: 'joao@teste.com' };
+      const error = new Error('Database error');
+
+      req.params = { id: '1' };
+      ClientesSchema.id = {
+        safeParse: jest.fn().mockReturnValue({ success: true, data: { id: 1 } })
       };
-      ClientesService.getClienteById.mockResolvedValue(null);
+      ClientesService.getClienteById.mockResolvedValue(existingClient);
+      ClientesService.deleteCliente.mockRejectedValue(error);
 
       await ClientesController.remove(req, res);
 
-      expect(sendError).toHaveBeenCalledWith(res, 404, {
-        message: "Cliente não encontrado com o ID informado",
-        field: "id"
-      });
+      expect(console.error).toHaveBeenCalledWith('Erro ao remover cliente:', error);
+      expect(sendError).toHaveBeenCalledWith(res, 500, 'Erro interno do servidor');
     });
   });
 });

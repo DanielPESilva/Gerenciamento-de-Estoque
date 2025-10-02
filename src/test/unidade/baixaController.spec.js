@@ -466,4 +466,298 @@ describe('BaixaController', () => {
       });
     });
   });
+
+  describe('atualizarItem', () => {
+    test('should update item successfully', async () => {
+      const updateData = { quantidade: 15 };
+      const updatedItem = { id: 1, roupa_id: 1, quantidade: 15 };
+
+      req.params = { item_id: '1' };
+      req.body = updateData;
+      BaixaSchema.updateItem = { 
+        parse: jest.fn().mockReturnValue(updateData) 
+      };
+      BaixaService.atualizarItem = jest.fn().mockResolvedValue(updatedItem);
+
+      await BaixaController.atualizarItem(req, res);
+
+      expect(BaixaService.atualizarItem).toHaveBeenCalledWith(1, updateData);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: 'Item atualizado com sucesso',
+        data: updatedItem
+      });
+    });
+
+    test('should handle validation errors when updating item', async () => {
+      const invalidData = { quantidade: -5 };
+      const zodError = new Error('Validation failed');
+      zodError.name = 'ZodError';
+      zodError.errors = [{ path: ['quantidade'], message: 'Quantidade deve ser positiva' }];
+
+      req.params = { item_id: '1' };
+      req.body = invalidData;
+      BaixaSchema.updateItem = { 
+        parse: jest.fn().mockImplementation(() => { throw zodError; }) 
+      };
+
+      await BaixaController.atualizarItem(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Dados inválidos',
+        errors: zodError.errors
+      });
+    });
+
+    test('should handle item not found error when updating', async () => {
+      const updateData = { quantidade: 15 };
+      const error = new Error('Item não encontrado');
+
+      req.params = { item_id: '999' };
+      req.body = updateData;
+      BaixaSchema.updateItem = { 
+        parse: jest.fn().mockReturnValue(updateData) 
+      };
+      BaixaService.atualizarItem = jest.fn().mockRejectedValue(error);
+
+      await BaixaController.atualizarItem(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Item não encontrado'
+      });
+    });
+
+    test('should handle insufficient stock error when updating', async () => {
+      const updateData = { quantidade: 1000 };
+      const error = new Error('Estoque insuficiente para esta operação');
+
+      req.params = { item_id: '1' };
+      req.body = updateData;
+      BaixaSchema.updateItem = { 
+        parse: jest.fn().mockReturnValue(updateData) 
+      };
+      BaixaService.atualizarItem = jest.fn().mockRejectedValue(error);
+
+      await BaixaController.atualizarItem(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Estoque insuficiente para esta operação'
+      });
+    });
+
+    test('should handle service errors when updating item', async () => {
+      const updateData = { quantidade: 15 };
+      const error = new Error('Database connection failed');
+
+      req.params = { item_id: '1' };
+      req.body = updateData;
+      BaixaSchema.updateItem = { 
+        parse: jest.fn().mockReturnValue(updateData) 
+      };
+      BaixaService.atualizarItem = jest.fn().mockRejectedValue(error);
+
+      await BaixaController.atualizarItem(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Database connection failed'
+      });
+    });
+  });
+
+  describe('removerItem', () => {
+    test('should remove item successfully', async () => {
+      const resultado = { 
+        message: 'Item removido com sucesso', 
+        item_restaurado: { id: 1, roupa_id: 1, quantidade: 10 } 
+      };
+
+      req.params = { item_id: '1' };
+      BaixaService.removerItem = jest.fn().mockResolvedValue(resultado);
+
+      await BaixaController.removerItem(req, res);
+
+      expect(BaixaService.removerItem).toHaveBeenCalledWith(1);
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: resultado.message,
+        data: resultado.item_restaurado
+      });
+    });
+
+    test('should handle item not found when removing', async () => {
+      const error = new Error('Item não encontrado');
+
+      req.params = { item_id: '999' };
+      BaixaService.removerItem = jest.fn().mockRejectedValue(error);
+
+      await BaixaController.removerItem(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Item não encontrado'
+      });
+    });
+
+    test('should handle service errors when removing item', async () => {
+      const error = new Error('Database error');
+
+      req.params = { item_id: '1' };
+      BaixaService.removerItem = jest.fn().mockRejectedValue(error);
+
+      await BaixaController.removerItem(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Database error'
+      });
+    });
+  });
+
+  describe('gerarRelatorio', () => {
+    test('should generate report successfully', async () => {
+      const relatorio = {
+        periodo: { inicio: '2024-01-01', fim: '2024-01-31' },
+        total_baixas: 10,
+        itens_detalhes: []
+      };
+
+      req.query = { data_inicio: '2024-01-01', data_fim: '2024-01-31' };
+      BaixaService.relatorioBaixasPeriodo = jest.fn().mockResolvedValue(relatorio);
+
+      await BaixaController.gerarRelatorio(req, res);
+
+      expect(BaixaService.relatorioBaixasPeriodo).toHaveBeenCalledWith('2024-01-01', '2024-01-31');
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith({
+        success: true,
+        message: 'Relatório gerado com sucesso',
+        data: relatorio
+      });
+    });
+
+    test('should handle missing data_inicio parameter', async () => {
+      req.query = { data_fim: '2024-01-31' };
+
+      await BaixaController.gerarRelatorio(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'É necessário informar data_inicio e data_fim'
+      });
+    });
+
+    test('should handle missing data_fim parameter', async () => {
+      req.query = { data_inicio: '2024-01-01' };
+
+      await BaixaController.gerarRelatorio(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'É necessário informar data_inicio e data_fim'
+      });
+    });
+
+    test('should handle missing both date parameters', async () => {
+      req.query = {};
+
+      await BaixaController.gerarRelatorio(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(400);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'É necessário informar data_inicio e data_fim'
+      });
+    });
+
+    test('should handle service errors when generating report', async () => {
+      const error = new Error('Database connection failed');
+
+      req.query = { data_inicio: '2024-01-01', data_fim: '2024-01-31' };
+      BaixaService.relatorioBaixasPeriodo = jest.fn().mockRejectedValue(error);
+
+      await BaixaController.gerarRelatorio(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Database connection failed'
+      });
+    });
+  });
+
+  describe('adicionarItem - additional error cases', () => {
+    test('should handle "não encontrada" error in adicionarItem', async () => {
+      const itemData = { roupa_id: 1, quantidade: 10, motivo: 'defeito' };
+      const error = new Error('Roupa não encontrada');
+
+      req.params = { id: '1' };
+      req.body = itemData;
+      BaixaSchema.addItem = { 
+        parse: jest.fn().mockReturnValue(itemData) 
+      };
+      BaixaService.adicionarItem = jest.fn().mockRejectedValue(error);
+
+      await BaixaController.adicionarItem(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Roupa não encontrada'
+      });
+    });
+
+    test('should handle "não encontrado" error in adicionarItem', async () => {
+      const itemData = { roupa_id: 1, quantidade: 10, motivo: 'defeito' };
+      const error = new Error('Produto não encontrado');
+
+      req.params = { id: '1' };
+      req.body = itemData;
+      BaixaSchema.addItem = { 
+        parse: jest.fn().mockReturnValue(itemData) 
+      };
+      BaixaService.adicionarItem = jest.fn().mockRejectedValue(error);
+
+      await BaixaController.adicionarItem(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Produto não encontrado'
+      });
+    });
+
+    test('should handle "Estoque insuficiente" error in adicionarItem', async () => {
+      const itemData = { roupa_id: 1, quantidade: 1000, motivo: 'defeito' };
+      const error = new Error('Estoque insuficiente para realizar baixa');
+
+      req.params = { id: '1' };
+      req.body = itemData;
+      BaixaSchema.addItem = { 
+        parse: jest.fn().mockReturnValue(itemData) 
+      };
+      BaixaService.adicionarItem = jest.fn().mockRejectedValue(error);
+
+      await BaixaController.adicionarItem(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Estoque insuficiente para realizar baixa'
+      });
+    });
+  });
 });
