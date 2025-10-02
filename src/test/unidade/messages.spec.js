@@ -19,7 +19,10 @@ describe('messages', () => {
       
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
-        success: true,
+        code: 200,
+        error: false,
+        message: "Requisição bem sucedida.",
+        errors: [],
         ...data
       });
     });
@@ -31,7 +34,10 @@ describe('messages', () => {
       
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith({
-        success: true,
+        code: 201,
+        error: false,
+        message: "Requisição bem sucedida, recurso foi criado",
+        errors: [],
         ...data
       });
     });
@@ -41,7 +47,11 @@ describe('messages', () => {
       
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
-        success: true
+        data: [],
+        error: false,
+        code: 200,
+        message: "Requisição bem sucedida.",
+        errors: []
       });
     });
   });
@@ -54,8 +64,11 @@ describe('messages', () => {
       
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
-        success: false,
-        message: errorMessage
+        data: [],
+        error: true,
+        code: 400,
+        message: "Requisição com sintaxe incorreta ou outros problemas.",
+        errors: [{ message: errorMessage }]
       });
     });
 
@@ -69,7 +82,10 @@ describe('messages', () => {
       
       expect(res.status).toHaveBeenCalledWith(422);
       expect(res.json).toHaveBeenCalledWith({
-        success: false,
+        data: [],
+        error: true,
+        code: 422,
+        message: "A requisição foi mal sucedida, falha na validação.",
         errors: errors
       });
     });
@@ -81,8 +97,11 @@ describe('messages', () => {
       
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({
-        success: false,
-        message: errorMessage
+        data: [],
+        error: true,
+        code: 404,
+        message: "O recurso solicitado não foi encontrado no servidor.",
+        errors: [{ message: errorMessage }]
       });
     });
 
@@ -93,8 +112,11 @@ describe('messages', () => {
       
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith({
-        success: false,
-        message: errorMessage
+        data: [],
+        error: true,
+        code: 500,
+        message: "Servidor encontrou um erro interno.",
+        errors: [{ message: errorMessage }]
       });
     });
 
@@ -103,8 +125,11 @@ describe('messages', () => {
       
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
-        success: false,
-        message: ''
+        data: [],
+        error: true,
+        code: 400,
+        message: "Requisição com sintaxe incorreta ou outros problemas.",
+        errors: [{ message: '' }]
       });
     });
   });

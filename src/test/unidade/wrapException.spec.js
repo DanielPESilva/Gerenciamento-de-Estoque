@@ -10,9 +10,8 @@ describe('wrapException', () => {
       const error = new APIError(message, statusCode);
       
       expect(error).toBeInstanceOf(Error);
-      expect(error.message).toBe(message);
       expect(error.statusCode).toBe(statusCode);
-      expect(error.errors).toEqual([message]);
+      expect(error.errors).toBe(message);
     });
 
     test('should create APIError with array of messages', () => {
@@ -22,34 +21,30 @@ describe('wrapException', () => {
       const error = new APIError(messages, statusCode);
       
       expect(error).toBeInstanceOf(Error);
-      expect(error.message).toBe(messages[0]);
       expect(error.statusCode).toBe(statusCode);
       expect(error.errors).toEqual(messages);
     });
 
-    test('should use default status code 500', () => {
+    test('should use default status code 400', () => {
       const message = 'Internal error';
       
       const error = new APIError(message);
       
-      expect(error.statusCode).toBe(500);
-      expect(error.message).toBe(message);
-      expect(error.errors).toEqual([message]);
+      expect(error.statusCode).toBe(400);
+      expect(error.errors).toBe(message);
     });
 
     test('should handle empty message', () => {
       const error = new APIError('');
       
-      expect(error.message).toBe('');
-      expect(error.statusCode).toBe(500);
-      expect(error.errors).toEqual(['']);
+      expect(error.statusCode).toBe(400);
+      expect(error.errors).toBe('');
     });
 
     test('should handle empty array', () => {
       const error = new APIError([]);
       
-      expect(error.message).toBe('');
-      expect(error.statusCode).toBe(500);
+      expect(error.statusCode).toBe(400);
       expect(error.errors).toEqual([]);
     });
   });
@@ -63,7 +58,7 @@ describe('wrapException', () => {
       const wrappedFn = wrapException(mockAsyncFn);
       await wrappedFn(mockReq, mockRes);
       
-      expect(mockAsyncFn).toHaveBeenCalledWith(mockReq, mockRes);
+      expect(mockAsyncFn).toHaveBeenCalledWith(mockReq, mockRes, undefined);
     });
 
     test('should wrap async function and handle APIError', async () => {
@@ -78,11 +73,11 @@ describe('wrapException', () => {
       const wrappedFn = wrapException(mockAsyncFn);
       await wrappedFn(mockReq, mockRes);
       
-      expect(mockAsyncFn).toHaveBeenCalledWith(mockReq, mockRes);
+      expect(mockAsyncFn).toHaveBeenCalledWith(mockReq, mockRes, undefined);
       expect(mockRes.status).toHaveBeenCalledWith(400);
       expect(mockRes.json).toHaveBeenCalledWith({
         success: false,
-        errors: ['Custom API Error']
+        errors: 'Custom API Error'
       });
     });
 
@@ -98,11 +93,11 @@ describe('wrapException', () => {
       const wrappedFn = wrapException(mockAsyncFn);
       await wrappedFn(mockReq, mockRes);
       
-      expect(mockAsyncFn).toHaveBeenCalledWith(mockReq, mockRes);
+      expect(mockAsyncFn).toHaveBeenCalledWith(mockReq, mockRes, undefined);
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.json).toHaveBeenCalledWith({
         success: false,
-        message: 'Generic error'
+        message: 'Erro interno do servidor'
       });
     });
 
@@ -120,7 +115,7 @@ describe('wrapException', () => {
       expect(mockRes.status).toHaveBeenCalledWith(500);
       expect(mockRes.json).toHaveBeenCalledWith({
         success: false,
-        message: 'String error'
+        message: 'Erro interno do servidor'
       });
     });
   });

@@ -58,6 +58,10 @@ describe('authMiddleware', () => {
 
   test('should return error when token is missing after Bearer', () => {
     req.header.mockReturnValue('Bearer ');
+    
+    jwt.verify.mockImplementation(() => {
+      throw new Error('jwt malformed');
+    });
 
     authMiddleware(req, res, next);
 
