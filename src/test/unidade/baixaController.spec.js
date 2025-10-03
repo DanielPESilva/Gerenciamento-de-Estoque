@@ -760,4 +760,47 @@ describe('BaixaController', () => {
       });
     });
   });
+
+  describe('criarBaixa - additional error cases', () => {
+    test('should handle generic error in criarBaixa (lines 123-130)', async () => {
+      const baixaData = { motivo: 'defeito', observacoes: 'Produto danificado' };
+      const error = new Error('Database timeout error');
+
+      req.body = baixaData;
+      BaixaSchema.create = { 
+        parse: jest.fn().mockReturnValue(baixaData) 
+      };
+      BaixaService.criarBaixa = jest.fn().mockRejectedValue(error);
+
+      await BaixaController.criarBaixa(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Database timeout error'
+      });
+    });
+  });
+
+  describe('adicionarItem - error handling line 192', () => {
+    test('should handle generic error in adicionarItem (line 192)', async () => {
+      const itemData = { roupa_id: 1, quantidade: 10, motivo: 'defeito' };
+      const error = new Error('Connection timeout');
+
+      req.params = { id: '1' };
+      req.body = itemData;
+      BaixaSchema.addItem = { 
+        parse: jest.fn().mockReturnValue(itemData) 
+      };
+      BaixaService.adicionarItem = jest.fn().mockRejectedValue(error);
+
+      await BaixaController.adicionarItem(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        success: false,
+        message: 'Connection timeout'
+      });
+    });
+  });
 });

@@ -1,0 +1,332 @@
+import { describe, expect, jest, test, beforeEach, afterEach } from '@jest/globals';
+import UsuariosRepository from '../../repository/usuariosRepository.js';
+
+// Mock do Prisma
+jest.mock('../../models/prisma.js', () => ({
+    usuario: {
+        findMany: jest.fn(),
+        count: jest.fn(),
+        findUnique: jest.fn(),
+        create: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn()
+    }
+}));
+
+// Obter referência ao mock
+// Mock do Prisma
+jest.mock('../../models/prisma.js', () => ({
+    __esModule: true,
+    default: {
+        usuarios: {
+            findMany: jest.fn(),
+            findUnique: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn(),
+            count: jest.fn()
+        },
+        $transaction: jest.fn()
+    }
+}));
+
+const mockPrisma = require('../../models/prisma.js').default;
+
+describe('UsuariosRepository', () => {
+    beforeEach(() => {
+        jest.clearAllMocks();
+    });
+
+    afterEach(() => {
+        jest.resetAllMocks();
+    });
+
+    describe('findAll', () => {
+        test('should return all users with pagination', async () => {
+            const mockUsuarios = [
+                {
+                    id: 1,
+                    nome: 'João Silva',
+                    email: 'joao@teste.com',
+                    role: 'USER',
+                    criado_em: new Date()
+                }
+            ];
+
+            mockPrisma.usuarios.findMany.mockResolvedValue(mockUsuarios);
+            mockPrisma.usuarios.count.mockResolvedValue(1);
+
+            const filters = {};
+            const pagination = { page: 1, limit: 10 };
+
+            const result = await UsuariosRepository.findAll(filters, pagination);
+
+            expect(result.data).toEqual(mockUsuarios);
+            expect(result.pagination).toMatchObject({
+                page: 1,
+                limit: 10,
+                total: 1,
+                totalPages: 1,
+                hasNext: false,
+                hasPrev: false
+            });
+        });
+
+        test('should apply nome filter', async () => {
+            mockPrisma.usuarios.findMany.mockResolvedValue([]);
+            mockPrisma.usuarios.count.mockResolvedValue(0);
+
+            const filters = { nome: 'João' };
+            const pagination = { page: 1, limit: 10 };
+
+            await UsuariosRepository.findAll(filters, pagination);
+
+            expect(mockPrisma.usuario.findMany).toHaveBeenCalledWith({
+                where: {
+                    nome: { contains: 'João' }
+                },
+                skip: 0,
+                take: 10,
+                select: {
+                    id: true,
+                    nome: true,
+                    email: true,
+                    role: true,
+                    criado_em: true
+                },
+                orderBy: { criado_em: 'desc' }
+            });
+        });
+
+        test('should apply email filter', async () => {
+            mockPrisma.usuarios.findMany.mockResolvedValue([]);
+            mockPrisma.usuarios.count.mockResolvedValue(0);
+
+            const filters = { email: 'joao@teste.com' };
+            const pagination = { page: 1, limit: 10 };
+
+            await UsuariosRepository.findAll(filters, pagination);
+
+            expect(mockPrisma.usuario.findMany).toHaveBeenCalledWith({
+                where: {
+                    email: { contains: 'joao@teste.com' }
+                },
+                skip: 0,
+                take: 10,
+                select: {
+                    id: true,
+                    nome: true,
+                    email: true,
+                    role: true,
+                    criado_em: true
+                },
+                orderBy: { criado_em: 'desc' }
+            });
+        });
+
+        test('should apply role filter', async () => {
+            mockPrisma.usuarios.findMany.mockResolvedValue([]);
+            mockPrisma.usuarios.count.mockResolvedValue(0);
+
+            const filters = { role: 'ADMIN' };
+            const pagination = { page: 1, limit: 10 };
+
+            await UsuariosRepository.findAll(filters, pagination);
+
+            expect(mockPrisma.usuario.findMany).toHaveBeenCalledWith({
+                where: {
+                    role: 'ADMIN'
+                },
+                skip: 0,
+                take: 10,
+                select: {
+                    id: true,
+                    nome: true,
+                    email: true,
+                    role: true,
+                    criado_em: true
+                },
+                orderBy: { criado_em: 'desc' }
+            });
+        });
+
+        test('should handle pagination correctly', async () => {
+            mockPrisma.usuarios.findMany.mockResolvedValue([]);
+            mockPrisma.usuarios.count.mockResolvedValue(25);
+
+            const filters = {};
+            const pagination = { page: 2, limit: 10 };
+
+            const result = await UsuariosRepository.findAll(filters, pagination);
+
+            expect(mockPrisma.usuario.findMany).toHaveBeenCalledWith({
+                where: {},
+                skip: 10,
+                take: 10,
+                select: {
+                    id: true,
+                    nome: true,
+                    email: true,
+                    role: true,
+                    criado_em: true
+                },
+                orderBy: { criado_em: 'desc' }
+            });
+
+            expect(result.pagination).toMatchObject({
+                page: 2,
+                limit: 10,
+                total: 25,
+                totalPages: 3,
+                hasNext: true,
+                hasPrev: true
+            });
+        });
+    });
+
+    describe('findById', () => {
+        test('should return user by id', async () => {
+            const mockUsuario = {
+                id: 1,
+                nome: 'João Silva',
+                email: 'joao@teste.com',
+                role: 'USER',
+                criado_em: new Date()
+            };
+
+            mockPrisma.usuarios.findUnique.mockResolvedValue(mockUsuario);
+
+            const result = await UsuariosRepository.findById(1);
+
+            expect(result).toEqual(mockUsuario);
+            expect(mockPrisma.usuario.findUnique).toHaveBeenCalledWith({
+                where: { id: 1 },
+                select: {
+                    id: true,
+                    nome: true,
+                    email: true,
+                    role: true,
+                    criado_em: true
+                }
+            });
+        });
+
+        test('should return null for non-existent user', async () => {
+            mockPrisma.usuarios.findUnique.mockResolvedValue(null);
+
+            const result = await UsuariosRepository.findById(999);
+
+            expect(result).toBeNull();
+        });
+    });
+
+    describe('findByEmail', () => {
+        test('should return user by email', async () => {
+            const mockUsuario = {
+                id: 1,
+                nome: 'João Silva',
+                email: 'joao@teste.com',
+                role: 'USER',
+                senha: 'hashedPassword'
+            };
+
+            mockPrisma.usuarios.findUnique.mockResolvedValue(mockUsuario);
+
+            const result = await UsuariosRepository.findByEmail('joao@teste.com');
+
+            expect(result).toEqual(mockUsuario);
+            expect(mockPrisma.usuario.findUnique).toHaveBeenCalledWith({
+                where: { email: 'joao@teste.com' }
+            });
+        });
+
+        test('should return null for non-existent email', async () => {
+            mockPrisma.usuarios.findUnique.mockResolvedValue(null);
+
+            const result = await UsuariosRepository.findByEmail('naoexiste@teste.com');
+
+            expect(result).toBeNull();
+        });
+    });
+
+    describe('create', () => {
+        test('should create new user', async () => {
+            const userData = {
+                nome: 'João Silva',
+                email: 'joao@teste.com',
+                senha: 'hashedPassword',
+                role: 'USER'
+            };
+
+            const mockCreatedUser = {
+                id: 1,
+                ...userData,
+                criado_em: new Date()
+            };
+
+            mockPrisma.usuarios.create.mockResolvedValue(mockCreatedUser);
+
+            const result = await UsuariosRepository.create(userData);
+
+            expect(result).toEqual(mockCreatedUser);
+            expect(mockPrisma.usuarios.create).toHaveBeenCalledWith({
+                data: userData,
+                select: {
+                    id: true,
+                    nome: true,
+                    email: true,
+                    role: true,
+                    criado_em: true
+                }
+            });
+        });
+    });
+
+    describe('update', () => {
+        test('should update existing user', async () => {
+            const updateData = { nome: 'João Santos' };
+            const mockUpdatedUser = {
+                id: 1,
+                nome: 'João Santos',
+                email: 'joao@teste.com',
+                role: 'USER',
+                criado_em: new Date()
+            };
+
+            mockPrisma.usuarios.update.mockResolvedValue(mockUpdatedUser);
+
+            const result = await UsuariosRepository.update(1, updateData);
+
+            expect(result).toEqual(mockUpdatedUser);
+            expect(mockPrisma.usuarios.update).toHaveBeenCalledWith({
+                where: { id: 1 },
+                data: updateData,
+                select: {
+                    id: true,
+                    nome: true,
+                    email: true,
+                    role: true,
+                    criado_em: true
+                }
+            });
+        });
+    });
+
+    describe('delete', () => {
+        test('should delete user', async () => {
+            const mockDeletedUser = {
+                id: 1,
+                nome: 'João Silva'
+            };
+
+            mockPrisma.usuarios.delete.mockResolvedValue(mockDeletedUser);
+
+            const result = await UsuariosRepository.delete(1);
+
+            expect(result).toEqual(mockDeletedUser);
+            expect(mockPrisma.usuarios.delete).toHaveBeenCalledWith({
+                where: { id: 1 }
+            });
+        });
+    });
+});
