@@ -55,14 +55,44 @@ describe('ClientesService', () => {
     });
 
     test('should return null for non-existent client', async () => {
-      const clientId = 999;
-
       ClientesRepository.findById.mockResolvedValue(null);
-
-      const result = await ClientesService.getClienteById(clientId);
-
-      expect(ClientesRepository.findById).toHaveBeenCalledWith(clientId);
+      
+      const result = await ClientesService.getClienteById(999);
+      
+      expect(ClientesRepository.findById).toHaveBeenCalledWith(999);
       expect(result).toBeNull();
+    });
+  });
+
+  describe('getClienteByCpf - line 24 coverage', () => {
+    test('should get cliente by CPF', async () => {
+      const mockCliente = { id: 1, nome: 'João Silva', cpf: '12345678901' };
+      ClientesRepository.findByCpf.mockResolvedValue(mockCliente);
+
+      const result = await ClientesService.getClienteByCpf('12345678901');
+
+      expect(result).toEqual(mockCliente);
+      expect(ClientesRepository.findByCpf).toHaveBeenCalledWith('12345678901');
+    });
+
+    test('should return null when cliente not found by CPF', async () => {
+      ClientesRepository.findByCpf.mockResolvedValue(null);
+
+      const result = await ClientesService.getClienteByCpf('99999999999');
+
+      expect(result).toBeNull();
+      expect(ClientesRepository.findByCpf).toHaveBeenCalledWith('99999999999');
+    });
+
+    test('should handle errors when searching by CPF', async () => {
+      const error = new Error('Database connection error');
+      ClientesRepository.findByCpf.mockRejectedValue(error);
+
+      await expect(ClientesService.getClienteByCpf('12345678901'))
+        .rejects
+        .toThrow('Database connection error');
+      
+      expect(ClientesRepository.findByCpf).toHaveBeenCalledWith('12345678901');
     });
   });
 
