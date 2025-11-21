@@ -99,8 +99,7 @@ class AuthServices {
         // Verificar se o usuário existe
         const user = await UsuariosRepository.getByEmail(email);
         if (!user) {
-            // Por segurança, não revelar que o email não existe
-            return { message: 'Se o email existir, você receberá instruções para redefinir sua senha.' };
+            throw new APIError(['Usuário não encontrado com este email'], 404);
         }
 
         // Gerar código de 6 dígitos
@@ -111,6 +110,14 @@ class AuthServices {
             reset_code: resetCode,
             reset_code_expires: new Date(Date.now() + 15 * 60 * 1000) // 15 minutos
         });
+
+        // Log do código para debug (REMOVER EM PRODUÇÃO)
+        console.log(`\n========================================`);
+        console.log(`CÓDIGO DE RECUPERAÇÃO DE SENHA`);
+        console.log(`Email: ${email}`);
+        console.log(`Código: ${resetCode}`);
+        console.log(`Expira em: 15 minutos`);
+        console.log(`========================================\n`);
 
         // Enviar email com código
         const subject = 'Código para redefinir sua senha - DressFy';
@@ -127,9 +134,16 @@ class AuthServices {
             </div>
         `;
 
-        await sendEmail(email, subject, message);
+        try {
+            await sendEmail(email, subject, message);
+            console.log(`Email enviado com sucesso para: ${email}`);
+        } catch (emailError) {
+            console.error(`Erro ao enviar email para ${email}:`, emailError.message);
+            // Não falhar a requisição se o email não for enviado
+            // O código já foi salvo no banco e será exibido no console
+        }
 
-        return { message: 'Se o email existir, você receberá instruções para redefinir sua senha.' };
+        return { message: 'Código de recuperação gerado. Verifique seu email ou o console do servidor.' };
     }
 
     /**
