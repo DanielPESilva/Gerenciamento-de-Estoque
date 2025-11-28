@@ -115,6 +115,8 @@ model Usuarios {
   nome               String
   email              String    @unique
   senha              String
+  cpf                String?   @unique
+  cnpj               String?   @unique
   criado_em          DateTime  @default(now())
   reset_code         String?
   reset_code_expires DateTime?

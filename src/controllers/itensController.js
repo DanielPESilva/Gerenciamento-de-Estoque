@@ -18,12 +18,14 @@ class ItensController {
             );
         }
 
-        const { page = 1, limit = 10, tipo, cor, tamanho } = queryValidation.data;
+        const { page = 1, limit = 10, tipo, cor, tamanho, nome, preco } = queryValidation.data;
         
         const filters = {};
         if (tipo) filters.tipo = tipo;
         if (cor) filters.cor = cor;
         if (tamanho) filters.tamanho = tamanho;
+        if (nome) filters.nome = nome;
+        if (preco) filters.preco = preco;
 
         const pagination = { page, limit };
 

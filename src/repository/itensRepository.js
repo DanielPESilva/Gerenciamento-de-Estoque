@@ -23,6 +23,24 @@ class ItensRepository {
             where.tamanho = filters.tamanho;
         }
 
+        if (filters.nome) {
+            where.nome = {
+                contains: filters.nome
+            };
+        }
+
+        if (filters.preco) {
+            const preco = parseFloat(filters.preco);
+            if (!isNaN(preco)) {
+                // Busca por valor exato ou faixa de ±10%
+                const tolerance = preco * 0.1; // 10% de tolerância
+                where.preco = {
+                    gte: Math.max(0, preco - tolerance),
+                    lte: preco + tolerance
+                };
+            }
+        }
+
         const [itens, total] = await Promise.all([
             prisma.roupas.findMany({
                 where,

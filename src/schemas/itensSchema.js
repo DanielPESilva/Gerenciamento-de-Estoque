@@ -40,7 +40,12 @@ class ItensSchema {
         ),
         tipo: z.string().optional(),
         cor: z.string().optional(),
-        tamanho: z.string().optional()
+        tamanho: z.string().optional(),
+        nome: z.string().optional(),
+        preco: z.preprocess(
+            (val) => val ? parseFloat(val) : undefined,
+            z.number().positive().optional()
+        )
     });
 
     static quantidade = z.object({

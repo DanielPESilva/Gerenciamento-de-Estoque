@@ -30,7 +30,7 @@ class AuthServices {
      * Registro de usuário
      */
     static async register(userData) {
-        const { nome, email, senha } = userData;
+        const { nome, email, senha, cpf, cnpj } = userData;
 
         // Verificar se o usuário já existe
         const existingUser = await UsuariosRepository.getByEmail(email);
@@ -41,12 +41,25 @@ class AuthServices {
         // Hash da senha
         const hashedPassword = await bcrypt.hash(senha, 10);
 
-        // Criar usuário
-        const newUser = await UsuariosRepository.create({
+        // Preparar dados do usuário
+        const newUserData = {
             nome,
             email,
             senha: hashedPassword
-        });
+        };
+
+        // Adicionar CPF se fornecido
+        if (cpf && cpf.trim() !== '') {
+            newUserData.cpf = cpf;
+        }
+
+        // Adicionar CNPJ se fornecido
+        if (cnpj && cnpj.trim() !== '') {
+            newUserData.cnpj = cnpj;
+        }
+
+        // Criar usuário
+        const newUser = await UsuariosRepository.create(newUserData);
 
         // Gerar tokens
         const tokens = this.generateTokens(newUser.id);
