@@ -10,6 +10,8 @@ class AuthSchema {
         nome: z.string().min(1, 'Nome é obrigatório'),
         email: z.string().email('Email inválido'),
         senha: z.string().min(6, 'Senha deve ter pelo menos 6 caracteres'),
+        cpf: z.string().regex(/^\d{11}$/, 'CPF deve ter 11 dígitos').optional().or(z.literal('')),
+        cnpj: z.string().regex(/^\d{14}$/, 'CNPJ deve ter 14 dígitos').optional().or(z.literal('')),
     });
 
     static forgotPassword = z.object({

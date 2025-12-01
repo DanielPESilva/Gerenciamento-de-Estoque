@@ -14,8 +14,7 @@ class ItensSchema {
         tamanho: z.string().min(1, "Tamanho é obrigatório"),
         cor: z.string().min(2, "Cor deve ter pelo menos 2 caracteres"),
         preco: z.number().positive("Preço deve ser um valor positivo"),
-        quantidade: z.number().int().nonnegative("Quantidade deve ser um número inteiro não negativo").default(0),
-        usuarios_id: z.number().int().positive("ID do usuário deve ser um número válido")
+        quantidade: z.number().int().nonnegative("Quantidade deve ser um número inteiro não negativo").default(0)
     });
 
     static update = z.object({
@@ -40,7 +39,12 @@ class ItensSchema {
         ),
         tipo: z.string().optional(),
         cor: z.string().optional(),
-        tamanho: z.string().optional()
+        tamanho: z.string().optional(),
+        nome: z.string().optional(),
+        preco: z.preprocess(
+            (val) => val ? parseFloat(val) : undefined,
+            z.number().positive().optional()
+        )
     });
 
     static quantidade = z.object({

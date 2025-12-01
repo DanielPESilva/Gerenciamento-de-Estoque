@@ -18,12 +18,14 @@ class ItensController {
             );
         }
 
-        const { page = 1, limit = 10, tipo, cor, tamanho } = queryValidation.data;
+        const { page = 1, limit = 10, tipo, cor, tamanho, nome, preco } = queryValidation.data;
         
         const filters = {};
         if (tipo) filters.tipo = tipo;
         if (cor) filters.cor = cor;
         if (tamanho) filters.tamanho = tamanho;
+        if (nome) filters.nome = nome;
+        if (preco) filters.preco = preco;
 
         const pagination = { page, limit };
 
@@ -81,7 +83,13 @@ class ItensController {
             );
         }
 
-        const item = await ItensService.createItem(bodyValidation.data);
+        // Adiciona o usuarios_id do token JWT
+        const itemData = {
+            ...bodyValidation.data,
+            usuarios_id: req.userId
+        };
+
+        const item = await ItensService.createItem(itemData);
 
         return res.status(201).json({
             success: true,

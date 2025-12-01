@@ -23,6 +23,19 @@ class ItensRepository {
             where.tamanho = filters.tamanho;
         }
 
+        if (filters.nome) {
+            where.nome = {
+                contains: filters.nome
+            };
+        }
+
+        if (filters.preco) {
+            const preco = parseFloat(filters.preco);
+            if (!isNaN(preco)) {
+                where.preco = preco;
+            }
+        }
+
         const [itens, total] = await Promise.all([
             prisma.roupas.findMany({
                 where,
@@ -66,6 +79,16 @@ class ItensRepository {
                         id: true,
                         nome: true,
                         email: true
+                    }
+                },
+                Imagens: {
+                    select: {
+                        id: true,
+                        url: true,
+                        criado_em: true
+                    },
+                    orderBy: {
+                        criado_em: 'desc'
                     }
                 },
                 ComprasItens: {

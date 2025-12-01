@@ -126,6 +126,34 @@ const VENDAS_PERMUTA_DATA = [
   },
 ];
 
+const CONDICIONAIS_DATA = [
+  {
+    data: new Date('2025-01-10'),
+    data_devolucao: new Date('2025-02-10'),
+    devolvido: false
+  },
+  {
+    data: new Date('2025-01-12'),
+    data_devolucao: new Date('2025-02-12'),
+    devolvido: false
+  },
+  {
+    data: new Date('2025-01-15'),
+    data_devolucao: new Date('2025-02-15'),
+    devolvido: false
+  },
+  {
+    data: new Date('2024-12-20'),
+    data_devolucao: new Date('2025-01-20'),
+    devolvido: true
+  },
+  {
+    data: new Date('2025-01-05'),
+    data_devolucao: new Date('2025-02-05'),
+    devolvido: false
+  },
+];
+
 // =============================================================================
 // FUNÇÕES DE CRIAÇÃO
 // =============================================================================
@@ -254,6 +282,83 @@ async function createVendasItens() {
   }
 }
 
+async function createCondicionais() {
+  console.log("📋 Criando condicionais...");
+  
+  // Buscar clientes criados
+  const clientes = await prisma.cliente.findMany({ orderBy: { id: 'asc' } });
+  
+  if (clientes.length === 0) {
+    console.log("⚠️ Nenhum cliente encontrado para criar condicionais");
+    return;
+  }
+  
+  // Associar cada condicional a um cliente
+  const condicionaisDataWithCliente = CONDICIONAIS_DATA.map((condicional, index) => ({
+    ...condicional,
+    cliente_id: clientes[index % clientes.length].id
+  }));
+  
+  const condicionais = await prisma.condicionais.createMany({
+    data: condicionaisDataWithCliente,
+  });
+  console.log(`✅ ${condicionais.count} condicionais criadas`);
+  return condicionais;
+}
+
+async function createCondicionaisItens() {
+  console.log("📦 Associando itens às condicionais...");
+  
+  // Buscar condicionais e roupas criadas
+  const condicionais = await prisma.condicionais.findMany({ orderBy: { id: 'asc' } });
+  const roupas = await prisma.roupas.findMany({ orderBy: { id: 'asc' } });
+
+  if (condicionais.length === 0 || roupas.length === 0) {
+    console.log("⚠️ Nenhuma condicional ou roupa encontrada para associar");
+    return;
+  }
+
+  // Criar associações condicionais-itens
+  const condicionaisItensData = [];
+  
+  // Condicional 1: Vestido + Saia + Blusa
+  if (condicionais[0]) condicionaisItensData.push(
+    { roupas_id: roupas[0]?.id, condicionais_id: condicionais[0].id, quatidade: 1 },
+    { roupas_id: roupas[5]?.id, condicionais_id: condicionais[0].id, quatidade: 2 },
+    { roupas_id: roupas[3]?.id, condicionais_id: condicionais[0].id, quatidade: 1 }
+  );
+  
+  // Condicional 2: Camisa + Camiseta
+  if (condicionais[1]) condicionaisItensData.push(
+    { roupas_id: roupas[1]?.id, condicionais_id: condicionais[1].id, quatidade: 1 },
+    { roupas_id: roupas[7]?.id, condicionais_id: condicionais[1].id, quatidade: 4 }
+  );
+  
+  // Condicional 3: Jaqueta + Short
+  if (condicionais[2]) condicionaisItensData.push(
+    { roupas_id: roupas[4]?.id, condicionais_id: condicionais[2].id, quatidade: 1 },
+    { roupas_id: roupas[8]?.id, condicionais_id: condicionais[2].id, quatidade: 2 }
+  );
+  
+  // Condicional 4: Blazer + Casaco (Devolvida)
+  if (condicionais[3]) condicionaisItensData.push(
+    { roupas_id: roupas[6]?.id, condicionais_id: condicionais[3].id, quatidade: 1 },
+    { roupas_id: roupas[9]?.id, condicionais_id: condicionais[3].id, quatidade: 1 }
+  );
+  
+  // Condicional 5: Calça Jeans
+  if (condicionais[4]) condicionaisItensData.push(
+    { roupas_id: roupas[2]?.id, condicionais_id: condicionais[4].id, quatidade: 1 }
+  );
+
+  if (condicionaisItensData.length > 0) {
+    const condicionaisItens = await prisma.condicionaisItens.createMany({
+      data: condicionaisItensData,
+    });
+    console.log(`✅ ${condicionaisItens.count} associações condicionais-itens criadas`);
+  }
+}
+
 // =============================================================================
 // FUNÇÕES PRINCIPAIS
 // =============================================================================
@@ -266,6 +371,8 @@ async function seedBasicData() {
     await createRouPas();
     await createVendasBasicas();
     await createVendasItens();
+    await createCondicionais();
+    await createCondicionaisItens();
     console.log("✅ Dados básicos criados com sucesso!");
   } catch (error) {
     console.error("❌ Erro ao criar dados básicos:", error);
@@ -320,6 +427,8 @@ async function showStatistics() {
     const roupasCount = await prisma.roupas.count();
     const vendasCount = await prisma.vendas.count();
     const vendasItensCount = await prisma.vendasItens.count();
+    const condicionaisCount = await prisma.condicionais.count();
+    const condicionaisItensCount = await prisma.condicionaisItens.count();
     
     // Contar vendas por forma de pagamento
     const vendasPorFormaPgto = await prisma.vendas.groupBy({
@@ -332,6 +441,8 @@ async function showStatistics() {
     console.log(`👕 Itens: ${roupasCount}`);
     console.log(`💰 Vendas: ${vendasCount}`);
     console.log(`📦 Vendas-Itens: ${vendasItensCount}`);
+    console.log(`📋 Condicionais: ${condicionaisCount}`);
+    console.log(`📦 Condicionais-Itens: ${condicionaisItensCount}`);
     
     console.log("\n💳 Vendas por forma de pagamento:");
     vendasPorFormaPgto.forEach(item => {
@@ -350,6 +461,20 @@ async function showStatistics() {
         console.log(`   ${index + 1}. ${venda.data_venda.toISOString().split('T')[0]}: ${venda.descricao_permuta}`);
       });
     }
+
+    // Mostrar condicionais por status
+    const condicionaisPorStatus = await prisma.condicionais.groupBy({
+      by: ['devolvido'],
+      _count: { devolvido: true },
+    });
+    
+    if (condicionaisPorStatus.length > 0) {
+      console.log("\n📋 Condicionais por status:");
+      condicionaisPorStatus.forEach(item => {
+        const status = item.devolvido ? 'Devolvidas' : 'Ativas';
+        console.log(`   ${status}: ${item._count.devolvido}`);
+      });
+    }
   } catch (error) {
     console.error("❌ Erro ao mostrar estatísticas:", error);
   }
@@ -358,6 +483,194 @@ async function showStatistics() {
 // =============================================================================
 // FUNÇÕES DE UTILIDADE
 // =============================================================================
+
+async function addMoreProducts() {
+  console.log("📦 Adicionando 50 produtos extras para teste de paginação...");
+  
+  const usuario = await prisma.usuarios.findUnique({
+    where: { email: 'danielpereiraestevao6@gmail.com' }
+  });
+  
+  if (!usuario) {
+    console.log("⚠️ Usuário de teste não encontrado. Use 'node Database/seed-master.js reset' primeiro.");
+    return;
+  }
+  
+  const tipos = ['Vestido', 'Camisa', 'Calça', 'Blusa', 'Jaqueta', 'Saia', 'Blazer', 'Camiseta', 'Short', 'Casaco'];
+  const tamanhos = ['PP', 'P', 'M', 'G', 'GG', '36', '38', '40', '42', '44'];
+  const cores = ['Azul', 'Vermelho', 'Verde', 'Amarelo', 'Preto', 'Branco', 'Rosa', 'Roxo', 'Laranja', 'Cinza', 'Marrom', 'Bege'];
+  
+  const produtos = [];
+  
+  for (let i = 1; i <= 50; i++) {
+    const tipo = tipos[i % tipos.length];
+    const tamanho = tamanhos[i % tamanhos.length];
+    const cor = cores[i % cores.length];
+    const preco = (Math.random() * 200 + 50).toFixed(2);
+    const quantidade = Math.floor(Math.random() * 20) + 1;
+    
+    produtos.push({
+      nome: `${tipo} ${cor}`,
+      descricao: `${tipo} ${cor} em tamanho ${tamanho}`,
+      tipo: tipo,
+      tamanho: tamanho,
+      cor: cor,
+      preco: parseFloat(preco),
+      quantidade: quantidade,
+      usuarios_id: usuario.id
+    });
+  }
+  
+  const result = await prisma.roupas.createMany({
+    data: produtos
+  });
+  
+  console.log(`✅ ${result.count} produtos adicionados!`);
+  
+  const total = await prisma.roupas.count({
+    where: { usuarios_id: usuario.id }
+  });
+  
+  console.log(`📊 Total de produtos do usuário: ${total}`);
+}
+
+async function addCondicionalProducts() {
+  console.log("📋 Adicionando produtos em condicional (quantidade 0)...");
+  
+  const usuario = await prisma.usuarios.findUnique({
+    where: { email: 'danielpereiraestevao6@gmail.com' }
+  });
+  
+  if (!usuario) {
+    console.log("⚠️ Usuário de teste não encontrado.");
+    return;
+  }
+  
+  const produtosCondicional = [
+    {
+      nome: 'Vestido Longo Vermelho',
+      descricao: 'Vestido longo para festa - Em condicional',
+      tipo: 'Vestido',
+      tamanho: 'M',
+      cor: 'Vermelho',
+      preco: 320.00,
+      quantidade: 0,
+      usuarios_id: usuario.id
+    },
+    {
+      nome: 'Terno Completo',
+      descricao: 'Terno masculino completo - Em condicional',
+      tipo: 'Terno',
+      tamanho: '42',
+      cor: 'Preto',
+      preco: 580.00,
+      quantidade: 0,
+      usuarios_id: usuario.id
+    },
+    {
+      nome: 'Casaco de Couro',
+      descricao: 'Casaco de couro legítimo - Em condicional',
+      tipo: 'Casaco',
+      tamanho: 'G',
+      cor: 'Marrom',
+      preco: 450.00,
+      quantidade: 0,
+      usuarios_id: usuario.id
+    },
+    {
+      nome: 'Conjunto Social Feminino',
+      descricao: 'Conjunto blazer + calça - Em condicional',
+      tipo: 'Conjunto',
+      tamanho: 'M',
+      cor: 'Cinza',
+      preco: 380.00,
+      quantidade: 0,
+      usuarios_id: usuario.id
+    },
+    {
+      nome: 'Vestido Floral Premium',
+      descricao: 'Vestido floral de grife - Em condicional',
+      tipo: 'Vestido',
+      tamanho: 'P',
+      cor: 'Amarelo',
+      preco: 420.00,
+      quantidade: 0,
+      usuarios_id: usuario.id
+    }
+  ];
+  
+  const result = await prisma.roupas.createMany({
+    data: produtosCondicional
+  });
+  
+  console.log(`✅ ${result.count} produtos em condicional adicionados!`);
+}
+
+async function addCondicionalRecords() {
+  console.log("📋 Criando registros de condicionais...");
+  
+  const clientes = await prisma.cliente.findMany({ orderBy: { id: 'asc' } });
+  const roupas = await prisma.roupas.findMany({ orderBy: { id: 'asc' } });
+  
+  if (clientes.length === 0) {
+    console.log("⚠️ Nenhum cliente encontrado");
+    return;
+  }
+  
+  // Criar condicionais
+  const cond1 = await prisma.condicionais.create({
+    data: {
+      cliente_id: clientes[0].id,
+      data: new Date('2025-01-10'),
+      data_devolucao: new Date('2025-02-10'),
+      devolvido: false
+    }
+  });
+  
+  const cond2 = await prisma.condicionais.create({
+    data: {
+      cliente_id: clientes[1].id,
+      data: new Date('2025-01-12'),
+      data_devolucao: new Date('2025-02-12'),
+      devolvido: false
+    }
+  });
+  
+  const cond3 = await prisma.condicionais.create({
+    data: {
+      cliente_id: clientes[2].id,
+      data: new Date('2025-01-15'),
+      data_devolucao: new Date('2025-02-15'),
+      devolvido: false
+    }
+  });
+  
+  const cond4 = await prisma.condicionais.create({
+    data: {
+      cliente_id: clientes[3 % clientes.length].id,
+      data: new Date('2024-12-20'),
+      data_devolucao: new Date('2025-01-20'),
+      devolvido: true
+    }
+  });
+  
+  console.log('✅ 4 condicionais criadas');
+  
+  // Adicionar itens às condicionais
+  if (roupas.length >= 10) {
+    await prisma.condicionaisItens.createMany({
+      data: [
+        { roupas_id: roupas[0].id, condicionais_id: cond1.id, quatidade: 1 },
+        { roupas_id: roupas[5].id, condicionais_id: cond1.id, quatidade: 2 },
+        { roupas_id: roupas[1].id, condicionais_id: cond2.id, quatidade: 1 },
+        { roupas_id: roupas[7].id, condicionais_id: cond2.id, quatidade: 3 },
+        { roupas_id: roupas[4].id, condicionais_id: cond3.id, quatidade: 1 },
+        { roupas_id: roupas[6].id, condicionais_id: cond4.id, quatidade: 1 },
+      ]
+    });
+    console.log('✅ Itens associados às condicionais');
+  }
+}
 
 async function updateEscamboToPermuta() {
   console.log("🔄 Atualizando 'Escambo' para 'Permuta'...");
@@ -412,15 +725,30 @@ async function main() {
         await updateEscamboToPermuta();
         break;
         
+      case 'add-products':
+        await addMoreProducts();
+        break;
+        
+      case 'add-condicional-products':
+        await addCondicionalProducts();
+        break;
+        
+      case 'add-condicionais':
+        await addCondicionalRecords();
+        break;
+        
       default:
         console.log("💡 Comandos disponíveis:");
-        console.log("   node Database/seed-master.js clear      - Limpar banco");
-        console.log("   node Database/seed-master.js basic      - Dados básicos");
-        console.log("   node Database/seed-master.js permuta    - Dados de permuta");
-        console.log("   node Database/seed-master.js full       - Dados completos");
-        console.log("   node Database/seed-master.js reset      - Reset completo");
-        console.log("   node Database/seed-master.js stats      - Mostrar estatísticas");
-        console.log("   node Database/seed-master.js fix-escambo - Corrigir escambo→permuta");
+        console.log("   node Database/seed-master.js clear                  - Limpar banco");
+        console.log("   node Database/seed-master.js basic                  - Dados básicos");
+        console.log("   node Database/seed-master.js permuta                - Dados de permuta");
+        console.log("   node Database/seed-master.js full                   - Dados completos");
+        console.log("   node Database/seed-master.js reset                  - Reset completo");
+        console.log("   node Database/seed-master.js stats                  - Mostrar estatísticas");
+        console.log("   node Database/seed-master.js fix-escambo            - Corrigir escambo→permuta");
+        console.log("   node Database/seed-master.js add-products           - Adicionar 50 produtos extras");
+        console.log("   node Database/seed-master.js add-condicional-products - Adicionar produtos em condicional");
+        console.log("   node Database/seed-master.js add-condicionais       - Criar registros de condicionais");
         break;
     }
   } catch (error) {
@@ -445,5 +773,8 @@ export {
   resetAndSeed,
   showStatistics,
   updateEscamboToPermuta,
+  addMoreProducts,
+  addCondicionalProducts,
+  addCondicionalRecords,
   main
 };

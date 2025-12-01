@@ -3,6 +3,7 @@ import AuthServices from '../../services/authService.js';
 import UsuariosRepository from '../../repository/usuariosRepository.js';
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 import { sendEmail } from '../../utils/sendEmail.js';
 import { APIError } from '../../utils/wrapException.js';
 
@@ -233,7 +234,7 @@ describe('AuthServices', () => {
       const result = await AuthServices.forgotPassword(email);
 
       expect(result).toEqual({
-        message: 'Se o email existir, você receberá instruções para redefinir sua senha.'
+        message: 'Código de recuperação gerado. Verifique seu email ou o console do servidor.'
       });
 
       expect(UsuariosRepository.getByEmail).toHaveBeenCalledWith(email);
@@ -249,11 +250,8 @@ describe('AuthServices', () => {
 
       UsuariosRepository.getByEmail.mockResolvedValue(null);
 
-      const result = await AuthServices.forgotPassword(email);
-
-      expect(result).toEqual({
-        message: 'Se o email existir, você receberá instruções para redefinir sua senha.'
-      });
+      // O serviço agora lança erro quando usuário não existe
+      await expect(AuthServices.forgotPassword(email)).rejects.toThrow(APIError);
       
       expect(UsuariosRepository.getByEmail).toHaveBeenCalledWith(email);
       expect(sendEmail).not.toHaveBeenCalled();
