@@ -83,7 +83,13 @@ class ItensController {
             );
         }
 
-        const item = await ItensService.createItem(bodyValidation.data);
+        // Adiciona o usuarios_id do token JWT
+        const itemData = {
+            ...bodyValidation.data,
+            usuarios_id: req.userId
+        };
+
+        const item = await ItensService.createItem(itemData);
 
         return res.status(201).json({
             success: true,

@@ -32,12 +32,7 @@ class ItensRepository {
         if (filters.preco) {
             const preco = parseFloat(filters.preco);
             if (!isNaN(preco)) {
-                // Busca por valor exato ou faixa de ±10%
-                const tolerance = preco * 0.1; // 10% de tolerância
-                where.preco = {
-                    gte: Math.max(0, preco - tolerance),
-                    lte: preco + tolerance
-                };
+                where.preco = preco;
             }
         }
 
@@ -84,6 +79,16 @@ class ItensRepository {
                         id: true,
                         nome: true,
                         email: true
+                    }
+                },
+                Imagens: {
+                    select: {
+                        id: true,
+                        url: true,
+                        criado_em: true
+                    },
+                    orderBy: {
+                        criado_em: 'desc'
                     }
                 },
                 ComprasItens: {

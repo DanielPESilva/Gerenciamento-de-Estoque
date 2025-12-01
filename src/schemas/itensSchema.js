@@ -14,8 +14,7 @@ class ItensSchema {
         tamanho: z.string().min(1, "Tamanho é obrigatório"),
         cor: z.string().min(2, "Cor deve ter pelo menos 2 caracteres"),
         preco: z.number().positive("Preço deve ser um valor positivo"),
-        quantidade: z.number().int().nonnegative("Quantidade deve ser um número inteiro não negativo").default(0),
-        usuarios_id: z.number().int().positive("ID do usuário deve ser um número válido")
+        quantidade: z.number().int().nonnegative("Quantidade deve ser um número inteiro não negativo").default(0)
     });
 
     static update = z.object({
