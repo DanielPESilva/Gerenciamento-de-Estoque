@@ -47,7 +47,7 @@ jobs:
 
   fazer-deploy:
     runs-on: ubuntu-latest
-    needs: [ buildar-docker-api ]
+    needs: [ build-docker-api ]
     environment: "Dressfy" 
 
     steps:
