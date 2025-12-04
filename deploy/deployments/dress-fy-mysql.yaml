@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: deteccao-animais-mysql
+spec:
+  selector:
+    matchLabels:
+      app: dress-fy-mysql
+  template:
+    metadata:
+      labels:
+        app: dress-fy-mysql
+    spec:
+      containers:
+        - name: dress-fy-mysql
+          image: mysql:8.0
+          ports:
+            - containerPort: 3306
+          envFrom:
+            - configMapRef:
+                name: csdressfy-mysql-config
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: pv
+          env:
+            - name: TZ
+              value: "America/Porto_Velho"
+            - name: MYSQL_ROOT_PASSWORD
+              value: "root_password" # Defina a senha do root
+            - name: MYSQL_DATABASE
+              value: "deteccao_db" # Nome do banco de dados
+            - name: MYSQL_USER
+              value: "deteccao_user" # Usuário do banco de dados
+            - name: MYSQL_PASSWORD
+              value: "user_password" # Senha do usuário do banco de dados
+            - name: LANG
+              value: "en_US.UTF-8"
+            - name: LC_ALL
+              value: "en_US.UTF-8"
+      volumes:
+        - name: pv
+          persistentVolumeClaim:
+            claimName: dress-fy-mysql

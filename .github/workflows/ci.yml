@@ -7,41 +7,48 @@ on:
     branches: [ dev, master ]
 
 jobs:
-  buildar-docker-api:
+  build-docker-api:
     runs-on: ubuntu-latest
-    environment: "Brazilian animais" 
+    environment: "Dressfy" 
     env:
-      IMAGE_NAME: altenirm/deteao-de-animais:latest
+      IMAGE_NAME: danielpesil/dress-fy-api:latest
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4
 
-      - uses: docker/setup-buildx-action@v3
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-      - uses: docker/login-action@v3
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USER }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-      - name: Configurar ambiente
+      - name: Configure environment variables
         run: |
-          ls -la
-          cp backend/.env.example backend/.env
-          echo "DB_URL=${{ secrets.DB_URL }}" >> backend/.env
-          echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> backend/.env
-          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> backend/.env
+          
+          echo "DATABASE_URL=mysql://dressfy_user:dressfy_pass@dress-fy-mysql:3306/dressfy_db" >> .env
+          echo "JWT_SECRET=super-secret-jwt-key-dressfy-2024-very-secure-32-characters-minimum" >> .env
+          echo "JWT_EXPIRES_IN=1h" >> .env
+          echo "EMAIL_USER=dressfy02@gmail.com" >> .env
+          echo "EMAIL_PASS=rqjj gqhr janb jkgf" >> .env
+          echo "HOST=dressfy02@gmail.com" >> .env
+          echo "PASS=rqjj gqhr janb jkgf" >> .env
+          echo "NODE_ENV=production" >> .env
 
       - name: Build Docker Image
-        run: docker build -t $IMAGE_NAME ./backend
-
+        run: docker build -t $IMAGE_NAME .
 
       - name: Push Docker Image
         run: docker push $IMAGE_NAME
 
+
   fazer-deploy:
     runs-on: ubuntu-latest
-    needs: [ buildar-docker-api, buildar-docker-front ]
-    environment: "Brazilian animais" 
+    needs: [ buildar-docker-api ]
+    environment: "Dressfy" 
 
     steps:
       - name: Criar pasta kube
@@ -69,46 +76,37 @@ jobs:
 
       - name: Remover deployments/configmaps anteriores
         run: |
-          kubectl delete deployment deteccao-animais-api || true
-          kubectl delete deployment deteccao-front || true
-          kubectl delete deployment deteccao-animais-postgres || true
-          kubectl delete configmap csdeteccao-postgres-config || true
+          kubectl delete deployment dress-fy-api || true
+          kubectl delete deployment dress-fy-postgres || true
+          kubectl delete configmap csdressfy-mysql-config || true
 
-      - name: Aplicar configmap do postgres
-        run: kubectl apply -f deploy/config/deteccao-animais-postgres-config.yaml
-      
-      - name: Aplicar Postgres
-        run: kubectl apply -f deploy/deployments/deteccao-animais-postgres.yaml
+      - name: Aplicar configmap do mysql
+        run: kubectl apply -f deploy/config/dress-fy-mysql-config.yaml
 
-      - name: Aguardar Postgres iniciar
+      - name: Aplicar MySQL
+        run: kubectl apply -f deploy/deployments/dress-fy-mysql.yaml
+
+      - name: Aguardar MySQL iniciar
         run: |
-          echo "Esperando Postgres subir..."
-          kubectl wait --for=condition=ready pod -l app=deteccao-animais-postgres --timeout=300s
+          echo "Esperando MySQL subir..."
+          kubectl wait --for=condition=ready pod -l app=dress-fy-mysql --timeout=300s
 
       - name: Aplicar novo deployment da api
-        run: kubectl apply -f deploy/deployments/deteccao-animais-api.yaml
+        run: kubectl apply -f deploy/deployments/dress-fy-api.yaml
 
-      - name: Aplicar novo deployment do front
-        run: kubectl apply -f deploy/deployments/deteccao-animais-front-end.yaml
- 
       - name: Aguardar rollout do deployment API
-        run: kubectl rollout status deployment/deteccao-animais-api --timeout=600s
+        run: kubectl rollout status deployment/dress-fy-api --timeout=600s
 
-      - name: Aguardar rollout do deployment Front
-        run: kubectl rollout status deployment/deteccao-front --timeout=600s
-     
       - name: Criar tabelas no banco
         run: |
-          POD=$(kubectl get pods -l app=deteccao-animais-api -o jsonpath="{.items[0].metadata.name}")
-          kubectl exec -i $POD -- python -m ultils.createTables
-          kubectl exec -i $POD -- python -m ultils.seed
+          POD=$(kubectl get pods -l app=dress-fy-api -o jsonpath="{.items[0].metadata.name}")
 
       - name: Verificar status do deployment
         run: |
           kubectl get pods
-          kubectl describe deploy/deteccao-animais-api
-          kubectl logs deploy/deteccao-animais-api
-          kubectl describe deploy/deteccao-front
-          kubectl logs deploy/deteccao-front
-          kubectl describe deploy/deteccao-animais-postgres
-          kubectl logs deploy/deteccao-animais-postgres
+          kubectl describe deploy/dress-fy-api
+          kubectl logs deploy/dress-fy-api
+          kubectl describe deploy/dress-fy-front
+          kubectl logs deploy/dress-fy-front
+          kubectl describe deploy/dress-fy-postgres
+          kubectl logs deploy/dress-fy-postgres

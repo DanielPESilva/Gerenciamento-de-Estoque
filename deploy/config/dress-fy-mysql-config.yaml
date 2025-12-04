@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: csdressfy-mysql-config
+data:
+  MYSQL_ROOT_PASSWORD: "root_password"
+  MYSQL_USER: "dressfy_user"  
+  MYSQL_PASSWORD: "dressfy_pass"        
+  MYSQL_DATABASE: "dressfy_db"          
