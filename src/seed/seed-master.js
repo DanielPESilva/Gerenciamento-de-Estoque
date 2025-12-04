@@ -1,4 +1,4 @@
-import prisma from "../src/models/prisma.js";
+import prisma from "../models/prisma.js";
 
 /**
  * SEED MASTER - Arquivo consolidado para todas as operações de banco de dados
@@ -778,3 +778,6 @@ export {
   addCondicionalRecords,
   main
 };
+
+
+

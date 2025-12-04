@@ -63,6 +63,26 @@ services:
       interval: 30s
       start_period: 40s
 
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: dressfy_seed
+    command: ["npm", "run", "seed"] # Comando para rodar o seed
+    depends_on:
+      database:
+        condition: service_healthy
+    restart: "no"  # Não reinicia após terminar
+    networks:
+      - dressfy_network
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 40s
+
+
 volumes:
   mysql_data:
     driver: local
