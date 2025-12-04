@@ -1,0 +1,114 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ dev, master ]
+  pull_request:
+    branches: [ dev, master ]
+
+jobs:
+  buildar-docker-api:
+    runs-on: ubuntu-latest
+    environment: "Brazilian animais" 
+    env:
+      IMAGE_NAME: altenirm/deteao-de-animais:latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Configurar ambiente
+        run: |
+          ls -la
+          cp backend/.env.example backend/.env
+          echo "DB_URL=${{ secrets.DB_URL }}" >> backend/.env
+          echo "MAIL_PASSWORD=${{ secrets.MAIL_PASSWORD }}" >> backend/.env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> backend/.env
+
+      - name: Build Docker Image
+        run: docker build -t $IMAGE_NAME ./backend
+
+
+      - name: Push Docker Image
+        run: docker push $IMAGE_NAME
+
+  fazer-deploy:
+    runs-on: ubuntu-latest
+    needs: [ buildar-docker-api, buildar-docker-front ]
+    environment: "Brazilian animais" 
+
+    steps:
+      - name: Criar pasta kube
+        run: mkdir -p ~/.kube
+  
+      - name: Criar kubeconfig a partir do secret
+        run: echo "${KUBECTL_CONFIG}" > ~/.kube/config
+        env:
+          KUBECTL_CONFIG: ${{ secrets.KUBECTL_CONFIG }}
+  
+      - run: chmod 600 ~/.kube/config
+  
+      - uses: actions/checkout@v4
+  
+      - uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+  
+      - name: Verificar cluster
+        run: |
+          kubectl config get-contexts
+          kubectl get nodes
+          kubectl get pods
+          kubectl get configmaps
+
+      - name: Remover deployments/configmaps anteriores
+        run: |
+          kubectl delete deployment deteccao-animais-api || true
+          kubectl delete deployment deteccao-front || true
+          kubectl delete deployment deteccao-animais-postgres || true
+          kubectl delete configmap csdeteccao-postgres-config || true
+
+      - name: Aplicar configmap do postgres
+        run: kubectl apply -f deploy/config/deteccao-animais-postgres-config.yaml
+      
+      - name: Aplicar Postgres
+        run: kubectl apply -f deploy/deployments/deteccao-animais-postgres.yaml
+
+      - name: Aguardar Postgres iniciar
+        run: |
+          echo "Esperando Postgres subir..."
+          kubectl wait --for=condition=ready pod -l app=deteccao-animais-postgres --timeout=300s
+
+      - name: Aplicar novo deployment da api
+        run: kubectl apply -f deploy/deployments/deteccao-animais-api.yaml
+
+      - name: Aplicar novo deployment do front
+        run: kubectl apply -f deploy/deployments/deteccao-animais-front-end.yaml
+ 
+      - name: Aguardar rollout do deployment API
+        run: kubectl rollout status deployment/deteccao-animais-api --timeout=600s
+
+      - name: Aguardar rollout do deployment Front
+        run: kubectl rollout status deployment/deteccao-front --timeout=600s
+     
+      - name: Criar tabelas no banco
+        run: |
+          POD=$(kubectl get pods -l app=deteccao-animais-api -o jsonpath="{.items[0].metadata.name}")
+          kubectl exec -i $POD -- python -m ultils.createTables
+          kubectl exec -i $POD -- python -m ultils.seed
+
+      - name: Verificar status do deployment
+        run: |
+          kubectl get pods
+          kubectl describe deploy/deteccao-animais-api
+          kubectl logs deploy/deteccao-animais-api
+          kubectl describe deploy/deteccao-front
+          kubectl logs deploy/deteccao-front
+          kubectl describe deploy/deteccao-animais-postgres
+          kubectl logs deploy/deteccao-animais-postgres
