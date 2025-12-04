@@ -4,6 +4,6 @@ metadata:
   name: csdressfy-mysql-config
 data:
   MYSQL_ROOT_PASSWORD: "root_password"
-  MYSQL_USER: "dressfy_user"  
-  MYSQL_PASSWORD: "dressfy_pass"        
-  MYSQL_DATABASE: "dressfy_db"          
+  MYSQL_USER: "deteccao_user"  
+  MYSQL_PASSWORD: "user_password"        
+  MYSQL_DATABASE: "deteccao_db"

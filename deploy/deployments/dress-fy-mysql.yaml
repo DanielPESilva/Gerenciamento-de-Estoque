@@ -25,14 +25,6 @@ spec:
           env:
             - name: TZ
               value: "America/Porto_Velho"
-            - name: MYSQL_ROOT_PASSWORD
-              value: "root_password" # Defina a senha do root
-            - name: MYSQL_DATABASE
-              value: "deteccao_db" # Nome do banco de dados
-            - name: MYSQL_USER
-              value: "deteccao_user" # Usuário do banco de dados
-            - name: MYSQL_PASSWORD
-              value: "user_password" # Senha do usuário do banco de dados
             - name: LANG
               value: "en_US.UTF-8"
             - name: LC_ALL
