@@ -1,7 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: deteccao-animais-mysql
+  name: dress-fy-mysql
 spec:
   selector:
     matchLabels:
