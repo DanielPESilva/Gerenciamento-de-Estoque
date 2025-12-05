@@ -89,7 +89,7 @@ jobs:
       - name: Aguardar MySQL iniciar
         run: |
           echo "Esperando MySQL subir..."
-          kubectl wait --for=condition=ready pod -l app=dress-fy-mysql --timeout=300s
+          kubectl wait --for=condition=ready pod -l app=dress-fy-mysql --timeout=600s
 
       - name: Aplicar novo deployment da api
         run: kubectl apply -f deploy/deployments/dress-fy-api.yaml
