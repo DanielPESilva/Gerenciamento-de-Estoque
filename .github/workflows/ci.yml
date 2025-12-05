@@ -29,7 +29,7 @@ jobs:
       - name: Configure environment variables
         run: |
           
-          echo "DATABASE_URL="mysql://dressfy_user:dressfy_pass@cloud.fslab.dev:8806/dressfy?connection_limit=10&socket_timeout=30" >> .env
+          echo "DATABASE_URL=mysql://dressfy_user:dressfy_pass@cloud.fslab.dev:8806/dressfy?connection_limit=10&socket_timeout=30" >> .env
           echo "JWT_SECRET=super-secret-jwt-key-dressfy-2024-very-secure-32-characters-minimum" >> .env
           echo "JWT_EXPIRES_IN=1h" >> .env
           echo "EMAIL_USER=dressfy02@gmail.com" >> .env
