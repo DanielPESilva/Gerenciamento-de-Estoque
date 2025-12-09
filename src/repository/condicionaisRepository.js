@@ -689,6 +689,33 @@ class CondicionaisRepository {
     static async buscarPorId(id) {
         return await this.getCondicionalById(id);
     }
+
+    // Finalizar condicional sem devolver itens ao estoque (utilizado quando itens são vendidos)
+    static async finalizarCondicionalSemDevolver(id, observacoes = null) {
+        return await prisma.$transaction(async (tx) => {
+            await tx.condicionaisItens.deleteMany({
+                where: { condicionais_id: id }
+            });
+
+            return await tx.condicionais.update({
+                where: { id },
+                data: {
+                    devolvido: true
+                },
+                include: {
+                    Cliente: {
+                        select: {
+                            id: true,
+                            nome: true,
+                            email: true,
+                            telefone: true,
+                            endereco: true
+                        }
+                    }
+                }
+            });
+        });
+    }
 }
 
 export default CondicionaisRepository;
