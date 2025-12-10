@@ -168,7 +168,20 @@ class ItensController {
             );
         }
 
-        await ItensService.deleteItem(id);
+        try {
+            await ItensService.deleteItem(id);
+        } catch (error) {
+            if (error?.code === 'P2003') {
+                throw new APIError(
+                    [{
+                        path: "ID",
+                        message: "Não é possível remover o item porque ele está vinculado a vendas ou condicionais. Finalize ou exclua os vínculos antes de tentar novamente."
+                    }],
+                    409
+                );
+            }
+            throw error;
+        }
 
         return res.status(204).send();
     }
