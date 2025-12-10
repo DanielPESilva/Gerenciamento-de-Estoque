@@ -45,9 +45,9 @@ if [ $? -eq 0 ]; then
     echo "🎉 DressFy iniciado com sucesso!"
     echo ""
     echo "📍 ACESSOS:"
-    echo "   🌐 API Principal: http://localhost:3000"
-    echo "   📚 Documentação: http://localhost:3000/api-docs"
-    echo "   ❤️  Health Check: http://localhost:3000/health"
+    echo "   🌐 API Principal: http://localhost:3010"
+    echo "   📚 Documentação: http://localhost:3010/api-docs"
+    echo "   ❤️  Health Check: http://localhost:3010/health"
     echo "   🗄️  MySQL: localhost:3306"
     echo ""
     echo "⏱️  Aguarde 30-60 segundos para inicialização completa"
@@ -62,11 +62,11 @@ if [ $? -eq 0 ]; then
     
     # Verificar se a API está respondendo
     for i in {1..12}; do
-        if curl -s http://localhost:3000/health > /dev/null 2>&1; then
+        if curl -s http://localhost:3010/health > /dev/null 2>&1; then
             echo "✅ API está respondendo!"
             echo ""
             echo "🎯 TESTE RÁPIDO:"
-            echo "   curl http://localhost:3000/health"
+            echo "   curl http://localhost:3010/health"
             break
         else
             echo "   Tentativa $i/12 - aguardando API..."

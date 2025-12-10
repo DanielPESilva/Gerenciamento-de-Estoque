@@ -49,15 +49,16 @@ services:
       HOST: "dressfy02@gmail.com"
       PASS: "rqjj gqhr janb jkgf"
       NODE_ENV: "production"
+      PORT: "3010"
     ports:
-      - "3000:3000"
+      - "3010:3010"
     depends_on:
       database:
         condition: service_healthy
     networks:
       - dressfy_network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3010/health"]
       timeout: 10s
       retries: 5
       interval: 30s
@@ -76,7 +77,7 @@ services:
     networks:
       - dressfy_network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3010/health"]
       timeout: 10s
       retries: 5
       interval: 30s
