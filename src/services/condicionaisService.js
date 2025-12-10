@@ -513,8 +513,20 @@ class CondicionaisService {
 
             if (condicional.devolvido) {
                 return {
-                    success: false,
-                    message: 'Condicional já foi finalizado',
+                    success: true,
+                    message: 'Condicional já havia sido finalizado anteriormente',
+                    data: {
+                        venda: null,
+                        condicional_atualizado: condicional,
+                        itens_vendidos: [],
+                        itens_devolvidos: [],
+                        resumo: {
+                            valor_total_venda: 0,
+                            desconto_aplicado: 0,
+                            valor_final: 0,
+                            condicional_finalizado: true
+                        }
+                    },
                     code: 'CONDICIONAL_ALREADY_FINISHED'
                 };
             }
@@ -601,41 +613,23 @@ class CondicionaisService {
                 valor_pago: parseFloat(valorFinal.toFixed(2)),
                 nome_cliente: condicional.Cliente ? condicional.Cliente.nome : undefined,
                 telefone_cliente: condicional.Cliente ? condicional.Cliente.telefone : undefined,
+                descricao_permuta: dadosVenda.descricao_permuta || undefined,
                 itens: itensVenda
             };
 
-            const venda = await VendasService.createVenda(dadosVendaCompleta);
+            const venda = await VendasService.createVendaFromCondicional(dadosVendaCompleta);
 
             // 5. Atualizar condicional
             if (itensRestantes.length === 0) {
-                // Se não há itens restantes, finalizar condicional
-                await CondicionaisRepository.finalizarCondicional(condicionalId, {
-                    devolvido: true,
-                    observacoes: `Convertido em venda #${venda.id}${dadosVenda.observacoes ? ` - ${dadosVenda.observacoes}` : ''}`
-                });
+                // Todos os itens foram vendidos - marcar condicional como finalizado sem devolver estoque
+                await CondicionaisRepository.finalizarCondicionalSemDevolver(condicionalId);
             } else {
-                // Atualizar quantidades dos itens restantes
+                // Atualizar quantidades dos itens restantes no condicional
                 await CondicionaisRepository.atualizarItensCondicional(condicionalId, itensRestantes);
             }
 
             // 6. Buscar condicional atualizado
             const condicionalAtualizado = await CondicionaisRepository.buscarPorId(condicionalId);
-
-            // 7. Processar devoluções para o estoque dos itens restantes que foram removidos
-            const itensDevolvidos = [];
-            for (const item of condicional.CondicionaisItens) {
-                const itemRestante = itensRestantes.find(r => r.roupas_id === item.roupas_id);
-                const quantidadeDevolvida = item.quatidade - (itemRestante ? itemRestante.quantidade : 0);
-                
-                if (quantidadeDevolvida > 0) {
-                    await CondicionaisRepository.devolverItemAoEstoque(item.roupas_id, quantidadeDevolvida);
-                    itensDevolvidos.push({
-                        roupas_id: item.roupas_id,
-                        quantidade: quantidadeDevolvida,
-                        nome: item.Roupa.nome
-                    });
-                }
-            }
 
             return {
                 success: true,
@@ -644,7 +638,7 @@ class CondicionaisService {
                     venda: venda,
                     condicional_atualizado: condicionalAtualizado,
                     itens_vendidos: itensVenda,
-                    itens_devolvidos: itensDevolvidos,
+                    itens_devolvidos: [], // Sem devolução automática ao estoque durante a venda
                     resumo: {
                         valor_total_venda: valorTotal,
                         desconto_aplicado: dadosVenda.desconto || 0,
@@ -655,6 +649,7 @@ class CondicionaisService {
             };
 
         } catch (error) {
+            console.error("Erro ao converter condicional em venda:", error);
             return {
                 success: false,
                 message: `Erro ao converter condicional em venda: ${error.message}`,

@@ -145,6 +145,11 @@ class VendasService {
             throw new Error(error.message);
         }
     }
+
+    // Criar venda a partir de um condicional sem ajustar estoque
+    static async createVendaFromCondicional(vendaData) {
+        return await VendasRepository.createVendaFromCondicional(vendaData);
+    }
 }
 
 export default VendasService;

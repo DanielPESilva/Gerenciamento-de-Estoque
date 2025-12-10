@@ -327,6 +327,64 @@ class VendasRepository {
 
         return roupa;
     }
+
+    // Criar venda sem ajustar estoque (usado para conversão de condicionais)
+    static async createVendaFromCondicional(vendaData) {
+        return await prisma.$transaction(async (tx) => {
+            const { itens, ...dadosVenda } = vendaData;
+
+            const novaVenda = await tx.vendas.create({
+                data: {
+                    forma_pgto: dadosVenda.forma_pgto,
+                    valor_total: dadosVenda.valor_total,
+                    desconto: dadosVenda.desconto,
+                    valor_pago: dadosVenda.valor_pago,
+                    descricao_permuta: dadosVenda.descricao_permuta || null,
+                    nome_cliente: dadosVenda.nome_cliente || null,
+                    telefone_cliente: dadosVenda.telefone_cliente || null
+                }
+            });
+
+            const itensCriados = [];
+
+            for (const item of itens) {
+                const roupa = await tx.roupas.findUnique({
+                    where: { id: item.roupas_id },
+                    select: {
+                        id: true,
+                        nome: true,
+                        tipo: true,
+                        tamanho: true,
+                        cor: true,
+                        preco: true,
+                        quantidade: true
+                    }
+                });
+
+                if (!roupa) {
+                    throw new Error(`Item não encontrado com ID ${item.roupas_id}`);
+                }
+
+                const vendaItem = await tx.vendasItens.create({
+                    data: {
+                        roupas_id: roupa.id,
+                        vendas_id: novaVenda.id,
+                        quatidade: item.quantidade
+                    }
+                });
+
+                itensCriados.push({
+                    ...vendaItem,
+                    Roupa: roupa
+                });
+            }
+
+            return {
+                ...novaVenda,
+                VendasItens: itensCriados
+            };
+        });
+    }
 }
 
 export default VendasRepository;

@@ -1,0 +1,112 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ dev, master ]
+  pull_request:
+    branches: [ dev, master ]
+
+jobs:
+  build-docker-api:
+    runs-on: ubuntu-latest
+    environment: "Dressfy" 
+    env:
+      IMAGE_NAME: danielpesil/dress-fy-api:latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USER }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Configure environment variables
+        run: |
+          
+          echo "DATABASE_URL=mysql://dressfy_user:dressfy_pass@cloud.fslab.dev:8806/dressfy?connection_limit=10&socket_timeout=30" >> .env
+          echo "JWT_SECRET=super-secret-jwt-key-dressfy-2024-very-secure-32-characters-minimum" >> .env
+          echo "JWT_EXPIRES_IN=1h" >> .env
+          echo "EMAIL_USER=dressfy02@gmail.com" >> .env
+          echo "EMAIL_PASS=rqjj gqhr janb jkgf" >> .env
+          echo "HOST=dressfy02@gmail.com" >> .env
+          echo "PASS=rqjj gqhr janb jkgf" >> .env
+          echo "NODE_ENV=production" >> .env
+
+      - name: Build Docker Image
+        run: docker build -t $IMAGE_NAME .
+
+      - name: Push Docker Image
+        run: docker push $IMAGE_NAME
+
+
+  fazer-deploy:
+    runs-on: ubuntu-latest
+    needs: [ build-docker-api ]
+    environment: "Dressfy" 
+
+    steps:
+      - name: Criar pasta kube
+        run: mkdir -p ~/.kube
+  
+      - name: Criar kubeconfig a partir do secret
+        run: echo "${KUBECTL_CONFIG}" > ~/.kube/config
+        env:
+          KUBECTL_CONFIG: ${{ secrets.KUBECTL_CONFIG }}
+  
+      - run: chmod 600 ~/.kube/config
+  
+      - uses: actions/checkout@v4
+  
+      - uses: azure/setup-kubectl@v3
+        with:
+          version: 'latest'
+  
+      - name: Verificar cluster
+        run: |
+          kubectl config get-contexts
+          kubectl get nodes
+          kubectl get pods
+          kubectl get configmaps
+
+      - name: Remover deployments/configmaps anteriores
+        run: |
+          kubectl delete deployment dress-fy-api || true
+          kubectl delete deployment dress-fy-postgres || true
+          kubectl delete configmap csdressfy-mysql-config || true
+
+      #- name: Aplicar configmap do mysql
+      #  run: kubectl apply -f deploy/config/dress-fy-mysql-config.yaml
+
+      # name: Aplicar MySQL
+      #  run: kubectl apply -f deploy/deployments/dress-fy-mysql.yaml
+
+      # - name: Aguardar MySQL iniciar
+      #  run: |
+      #    echo "Esperando MySQL subir..."
+      #    kubectl wait --for=condition=ready pod -l app=dress-fy-mysql --timeout=600s
+
+      - name: Aplicar novo deployment da api
+        run: kubectl apply -f deploy/deployments/dress-fy-api.yaml
+
+      - name: Aguardar rollout do deployment API
+        run: kubectl rollout status deployment/dress-fy-api --timeout=600s
+
+      - name: Criar tabelas no banco
+        run: |
+          POD=$(kubectl get pods -l app=dress-fy-api -o jsonpath="{.items[0].metadata.name}")
+
+      - name: Verificar status do deployment
+        run: |
+          kubectl get pods
+          kubectl describe deploy/dress-fy-api
+          kubectl logs deploy/dress-fy-api
+        #  kubectl describe deploy/dress-fy-front
+        #  kubectl logs deploy/dress-fy-front
+        #  kubectl describe deploy/dress-fy-postgres
+        #  kubectl logs deploy/dress-fy-postgres

@@ -3,7 +3,7 @@
 # ========================================
 
 # Imagem base do Node.js (Alpine para ser mais leve)
-FROM node:18-alpine
+FROM node:20-alpine
 
 # Instalar dependências do sistema
 RUN apk add --no-cache wget curl
@@ -20,7 +20,7 @@ COPY package*.json ./
 COPY prisma ./prisma/
 
 # Instalar dependências
-RUN npm ci --only=production && npm cache clean --force
+RUN npm ci && npm cache clean --force
 
 # Gerar Prisma Client
 RUN npx prisma generate
@@ -32,11 +32,12 @@ COPY --chown=nodejs:nodejs . .
 USER nodejs
 
 # Expor porta
-EXPOSE 3000
+ENV PORT=3010
+EXPOSE 3010
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+  CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/health || exit 1
 
 # Comando para iniciar
 CMD ["npm", "start"]
