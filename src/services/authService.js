@@ -86,8 +86,27 @@ class AuthServices {
             throw new APIError(['Credenciais inválidas'], 401);
         }
 
-        // Verificar senha
-        const isValidPassword = await bcrypt.compare(senha, user.senha);
+        // Verificar senha (compatível com hashes antigos em SHA-256)
+        let isValidPassword = false;
+        try {
+            if (user.senha && user.senha.startsWith('$2')) {
+                // Hash gerado com bcrypt (formato atual)
+                isValidPassword = await bcrypt.compare(senha, user.senha);
+            } else {
+                // Compatibilidade com seeds antigos que usavam SHA-256
+                const sha256Hash = crypto.createHash('sha256').update(senha).digest('hex');
+                if (user.senha === sha256Hash) {
+                    isValidPassword = true;
+                    // Atualiza o hash para bcrypt para evitar futuros problemas
+                    const newHash = await bcrypt.hash(senha, 10);
+                    await UsuariosRepository.update(user.id, { senha: newHash });
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao validar senha do usuário:', error);
+            throw new APIError(['Credenciais inválidas'], 401);
+        }
+
         if (!isValidPassword) {
             throw new APIError(['Credenciais inválidas'], 401);
         }

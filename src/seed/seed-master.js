@@ -1,4 +1,5 @@
 import prisma from "../models/prisma.js";
+import bcrypt from "bcrypt";
 
 /**
  * SEED MASTER - Arquivo consolidado para todas as operações de banco de dados
@@ -35,21 +36,23 @@ async function clearDatabase() {
 // DADOS BÁSICOS
 // =============================================================================
 
+const hashPasswordSync = (plain) => bcrypt.hashSync(plain, 10);
+
 const USUARIOS_DATA = [
   { 
     nome: 'Admin Dressfy', 
     email: 'admin@dressfy.com', 
-    senha: '5e884898da28047151d0e56f8dc6292773603d0d6aabbdd62a11ef721d1542d8' // senha: "password"
+    senha: hashPasswordSync('password')
   },
   { 
     nome: 'Vendedora Ana', 
     email: 'ana@dressfy.com', 
-    senha: '55a5e9e78207b4df8699d60886fa070079463547b095d1a05bc719bb4e6cd251' // senha: "123456"
+    senha: hashPasswordSync('123456')
   },
   { 
     nome: 'Vendedora Maria', 
     email: 'maria@dressfy.com', 
-    senha: '55a5e9e78207b4df8699d60886fa070079463547b095d1a05bc719bb4e6cd251' // senha: "123456"
+    senha: hashPasswordSync('123456')
   },
 ];
 
